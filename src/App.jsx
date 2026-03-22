@@ -310,7 +310,7 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .sb.open{transform:translateX(0)}
   .sb-overlay{display:block}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%;max-width:100vw}
-  .content{padding:12px 10px 76px;overflow-x:hidden;overflow-y:auto}
+  .content{padding:12px 10px calc(72px + env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto}
   .topbar{padding:10px 12px;gap:8px}
   .tbt{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}
   .tbp{display:none}
