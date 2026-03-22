@@ -274,18 +274,21 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .bnav{display:none}
 
 @media(max-width:768px){
+  html,body,#root{overflow-x:hidden;max-width:100vw}
   .hamburger{display:flex}
   .sb{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:290px;min-width:0 !important;z-index:200;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh3)}
   .sb.open{transform:translateX(0)}
   .sb-overlay{display:block}
-  .app{height:100vh}
-  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%}
-  .content{padding:12px 12px 76px}
+  .app{height:100vh;overflow:hidden}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%;max-width:100vw}
+  .content{padding:12px 10px 76px;overflow-x:hidden;overflow-y:auto}
   .topbar{padding:10px 12px;gap:8px}
-  .tbt{font-size:14px}
+  .tbt{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}
   .tbp{display:none}
   .topbar>span[style]{display:none}
   .topbar>.sep{display:none}
+
+  /* Грids */
   .sg{grid-template-columns:repeat(2,1fr);gap:8px}
   .sc{padding:12px 14px}
   .sn{font-size:22px}
@@ -296,15 +299,42 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .rg{grid-template-columns:repeat(2,1fr)}
   .pgrid{grid-template-columns:repeat(2,1fr)}
   .frow{grid-template-columns:1fr}
-  .card{overflow-x:auto}
+
+  /* Таблицы — скролл внутри карточки */
+  .card{overflow-x:auto !important;max-width:100%}
+  .tbl{min-width:520px}
+  .tbl th{white-space:nowrap;font-size:9px;padding:8px 10px}
+  .tbl td{padding:9px 10px;font-size:12px}
+
+  /* Flex строки */
   .kbar{flex-direction:column;align-items:flex-start;gap:8px}
-  .mkchar{min-width:80px;font-size:12px}
-  .si{width:100%;max-width:100%}
+  .nr{gap:8px}
+  .hrow{flex-wrap:wrap;gap:4px}
+  .arow{flex-wrap:wrap}
+  .mact{flex-wrap:wrap}
+  .ir{flex-wrap:wrap}
+  .mkrow{flex-wrap:wrap;gap:6px}
+  .mkchar{min-width:0;font-size:12px}
+  .mkcont{white-space:normal}
+  .stabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .stab{white-space:nowrap;padding:8px 10px}
+  .erow{flex-wrap:wrap}
+  .ch{flex-wrap:wrap;gap:6px}
+
+  /* Поиск и инпуты */
+  .si{width:100% !important;max-width:100%}
+  .sw{width:100%}
+
+  /* Модалки */
   .ov{padding:0;align-items:flex-end}
   .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:92vh;max-width:100%;width:100%;margin:0}
   .mbody{padding:14px}
   .mtop{padding:16px 14px 12px}
+  .mtabs{overflow-x:auto}
+  .mtab{white-space:nowrap}
   .btn{font-size:12px;padding:8px 12px}
+
+  /* Нижняя навигация */
   .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:100;height:60px;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
   .bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:700;color:var(--ink3);cursor:pointer;border-radius:8px;padding:6px 4px;transition:all .15s;min-width:0;border:none;background:none;font-family:'Manrope',sans-serif;letter-spacing:.1px}
   .bni.on{color:var(--blue)}
@@ -312,6 +342,9 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .ni{padding:10px 12px;font-size:13px}
   .scene{margin-bottom:8px}
   .sh2{flex-wrap:wrap;gap:6px}
+  .sdur{font-size:10px;padding:2px 7px}
+  .idc{font-size:9.5px}
+  .pill{font-size:10px}
 }
 `;
 
