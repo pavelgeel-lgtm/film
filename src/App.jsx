@@ -136,11 +136,11 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#0055A5);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(0,174,239,.3)}
 .avn{font-size:12px;font-weight:700;color:var(--ink)}.avr{font-size:10.5px;color:var(--ink3);font-weight:500;margin-top:1px}
 
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .topbar{padding:12px 22px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .tbt{font-size:16px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
 .tbp{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--blue-light);color:var(--blue);letter-spacing:.1px}
-.content{flex:1;overflow-y:auto;padding:20px 22px}
+.content{flex:1;min-height:0;overflow-y:auto;padding:20px 22px}
 
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-family:'Manrope',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;border:none;transition:all .15s;letter-spacing:-.1px}
 .btn:hover{transform:translateY(-1px)}
@@ -314,7 +314,7 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .sb.open{transform:translateX(0)}
   .sb-overlay{display:block}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%;max-width:100vw}
-  .content{padding:12px 10px calc(72px + env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto}
+  .content{flex:1;min-height:0;padding:12px 10px calc(72px + env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto}
   .topbar{padding:10px 12px;gap:8px}
   .tbt{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:50vw}
   .tbp{display:none}
