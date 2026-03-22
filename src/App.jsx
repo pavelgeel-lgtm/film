@@ -596,6 +596,67 @@ function RolesView(){
   </div></div>);
 }
 
+/* ── PHOTO UPLOADER ──────────────────────────────────────────────────────── */
+function PhotoUploader({ refType, refId, initialPhotos = [] }) {
+  const [photos, setPhotos] = useState(initialPhotos);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef(null);
+
+  const upload = async (files) => {
+    if (!files?.length) return;
+    setUploading(true);
+    const token = localStorage.getItem("access_token");
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData();
+        fd.append("photo", file);
+        fd.append("ref_type", refType);
+        fd.append("ref_id", String(refId));
+        const res = await fetch(`${API}/photos/upload`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: fd,
+        });
+        const data = await res.json();
+        if (res.ok) setPhotos(p => [data, ...p]);
+      } catch {/* продолжаем */}
+    }
+    setUploading(false);
+  };
+
+  const remove = async (photo) => {
+    try {
+      await apiFetch(`/photos/${photo.id}`, { method: "DELETE" });
+      setPhotos(p => p.filter(x => x.id !== photo.id));
+    } catch {/* ignore */}
+  };
+
+  return (
+    <div>
+      <input ref={inputRef} type="file" accept="image/*" multiple capture="environment"
+        style={{ display: "none" }}
+        onChange={e => { upload(e.target.files); e.target.value = ""; }}
+      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+        {photos.map(p => (
+          <div key={p.id} style={{ position: "relative", aspectRatio: "4/3", borderRadius: 8, overflow: "hidden", background: "#f1f5f9" }}>
+            <img src={p.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <button onClick={() => remove(p)}
+              style={{ position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <I n="x" s={12} c="#fff" />
+            </button>
+          </div>
+        ))}
+        <div onClick={() => !uploading && inputRef.current?.click()}
+          style={{ aspectRatio: "4/3", borderRadius: 8, border: "2px dashed rgba(37,99,235,.3)", background: "#E6F7FD", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, cursor: uploading ? "wait" : "pointer", color: "#00AEEF" }}>
+          {uploading ? <I n="clk" s={22} c="#00AEEF" /> : <I n="cam" s={22} c="#00AEEF" />}
+          <span style={{ fontSize: 11, fontWeight: 700 }}>{uploading ? "Загрузка..." : "Добавить фото"}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const NAV=[{s:"ОБЗОР"},{id:"home",ico:"home",lbl:"Главная"},{id:"notifs",ico:"bell",lbl:"Уведомления",badge:3},{s:"СКЛАД"},{id:"warehouse",ico:"arch",lbl:"Кабинет склада",badge:4},{id:"props",ico:"box",lbl:"Реквизит"},{id:"costumes",ico:"hanger",lbl:"Костюмы"},{id:"cells",ico:"grid",lbl:"Карта склада"},{s:"ПРОИЗВОДСТВО"},{id:"kpp",ico:"film",lbl:"Разбор КПП"},{id:"field",ico:"user",lbl:"Кабинет площадки"},{s:"АРЕНДА"},{id:"rental",ico:"tag",lbl:"Аренда реквизита"},{s:"ПАРТНЁРЫ"},{id:"transport",ico:"car",lbl:"Транспорт"},{id:"locations",ico:"pin",lbl:"Локации"},{id:"pprops",ico:"arch",lbl:"Реквизит партнёров"},{s:"КОМАНДА"},{id:"roles",ico:"users",lbl:"Роли"}];
 const TTLS={home:"Главная",notifs:"Уведомления",warehouse:"Кабинет склада",props:"Реквизит",costumes:"Костюмы",cells:"Карта склада",kpp:"Разбор КПП",field:"Кабинет площадки",rental:"Аренда реквизита",transport:"Транспорт",locations:"Локации",pprops:"Реквизит партнёров",roles:"Роли и доступы"};
 
@@ -712,13 +773,8 @@ function IssueModal({req,onClose,onIssue}){
       </>}
       {step===2&&<>
         <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>СФОТОГРАФИРУЙТЕ ПРЕДМЕТ ПЕРЕД ВЫДАЧЕЙ</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
-          {[1,2,3].map(i=><div key={i} style={{aspectRatio:"4/3",borderRadius:8,border:"2px dashed rgba(37,99,235,.3)",background:"#E6F7FD",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",color:"#00AEEF"}}>
-            <I n="cam" s={22} c="#00AEEF"/>
-            <span style={{fontSize:11,fontWeight:700}}>Фото {i}</span>
-          </div>)}
-        </div>
-        <div className="mact"><button className="btn bp" onClick={()=>setStep(3)}>Далее — Подпись</button><button className="btn bg" onClick={()=>setStep(1)}>Назад</button></div>
+        <PhotoUploader refType="item" refId={item?.id||0}/>
+        <div style={{marginTop:12}} className="mact"><button className="btn bp" onClick={()=>setStep(3)}>Далее — Подпись</button><button className="btn bg" onClick={()=>setStep(1)}>Назад</button></div>
       </>}
       {step===3&&<>
         <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:10}}>ПОДПИСЬ ПОЛУЧАТЕЛЯ — {req.who}</div>
@@ -773,12 +829,7 @@ function ReturnModal({issue,onClose,onReturn}){
         </div>}
       </div>
       <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>ФОТО ПРИ ВОЗВРАТЕ</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-        {[1,2,3].map(i=><div key={i} style={{aspectRatio:"4/3",borderRadius:8,border:"2px dashed rgba(37,99,235,.3)",background:"#E6F7FD",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,cursor:"pointer",color:"#00AEEF"}}>
-          <I n="cam" s={22} c="#00AEEF"/>
-          <span style={{fontSize:11,fontWeight:700}}>Фото {i}</span>
-        </div>)}
-      </div>
+      <div style={{marginBottom:14}}><PhotoUploader refType="item" refId={item?.id||0}/></div>
       <div className="fg"><label className="fl">Состояние при возврате</label>
         <select className="fi" value={cond} onChange={e=>setCond(e.target.value)}>
           {["Отлично","Хорошее","Удовлетворительное","Повреждён"].map(c=><option key={c}>{c}</option>)}
