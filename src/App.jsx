@@ -270,6 +270,10 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .cbtn:active{transform:scale(.97)}
 .wh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
 .notif-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.kbar-top{display:flex;align-items:center;gap:18px}
+.kbar-counts{display:flex;gap:18px;align-items:center}
+.kbar-actions{display:flex;gap:6px;margin-left:auto}
+.kpp-btns{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.05)}
 
 .hamburger{display:none;width:36px;height:36px;align-items:center;justify-content:center;border:none;background:var(--surface);border-radius:var(--r);cursor:pointer;flex-shrink:0;border:1px solid var(--border)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.45);z-index:199;backdrop-filter:blur(2px)}
@@ -278,10 +282,10 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 @media(max-width:768px){
   html,body,#root{overflow-x:hidden;max-width:100vw}
   .hamburger{display:flex}
+  .app{height:100vh;overflow:hidden}
   .sb{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:290px;min-width:0 !important;z-index:200;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh3)}
   .sb.open{transform:translateX(0)}
   .sb-overlay{display:block}
-  .app{height:100vh;overflow:hidden}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%;max-width:100vw}
   .content{padding:12px 10px 76px;overflow-x:hidden;overflow-y:auto}
   .topbar{padding:10px 12px;gap:8px}
@@ -289,74 +293,68 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .tbp{display:none}
   .topbar>span[style]{display:none}
   .topbar>.sep{display:none}
-
-  /* Грids */
-  .sg{grid-template-columns:repeat(2,1fr);gap:8px}
-  .sc{padding:12px 14px}
-  .sn{font-size:22px}
-  .g2{grid-template-columns:1fr}
-  .mgrid{grid-template-columns:1fr}
+  .sg,.wh-stats{grid-template-columns:1fr 1fr !important;gap:8px !important}
+  .notif-stats{grid-template-columns:1fr !important;gap:8px !important}
+  .g2,.mgrid,.field-g{grid-template-columns:1fr !important}
   .mgrid3{grid-template-columns:1fr 1fr}
   .ag{grid-template-columns:1fr}
-  .rg{grid-template-columns:repeat(2,1fr)}
-  .pgrid{grid-template-columns:repeat(2,1fr)}
+  .rg{grid-template-columns:1fr 1fr}
+  .pgrid{grid-template-columns:1fr 1fr}
   .frow{grid-template-columns:1fr}
-
-  /* Таблицы — скролл внутри карточки */
-  .card{overflow-x:auto !important;max-width:100%}
+  .sc{padding:12px 14px}
+  .sn{font-size:20px}
+  .card{overflow-x:auto !important}
   .tbl{min-width:520px}
-  .tbl th{white-space:nowrap;font-size:9px;padding:8px 10px}
-  .tbl td{padding:9px 10px;font-size:12px}
-
-  /* Flex строки */
-  .kbar{flex-direction:column;align-items:flex-start;gap:8px}
-  .nr{gap:8px}
-  .hrow{flex-wrap:wrap;gap:4px}
-  .arow{flex-wrap:wrap}
-  .mact{flex-wrap:wrap}
-  .ir{flex-wrap:wrap}
-  .mkrow{flex-wrap:wrap;gap:6px}
-  .mkchar{min-width:0;font-size:12px}
-  .mkcont{white-space:normal}
-  .stabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .stab{white-space:nowrap;padding:8px 10px}
-  .erow{flex-wrap:wrap}
+  .tbl th{white-space:nowrap;font-size:9px;padding:7px 8px}
+  .tbl td{padding:8px;font-size:12px}
+  .nr{flex-wrap:wrap}
+  .nr>div:last-child{flex-direction:row !important;justify-content:space-between !important;align-items:center !important;width:100% !important;padding-top:8px !important;border-top:1px solid var(--border);margin-top:4px}
+  .nr>div:last-child .ntm{margin:0}
+  .req-row{flex-wrap:wrap !important;gap:8px !important}
   .ch{flex-wrap:wrap;gap:6px}
-
-  /* Поиск и инпуты */
-  .si{width:100% !important;max-width:100%}
-  .sw{width:100%}
-
-  /* Модалки */
+  .kbar{flex-direction:column !important;align-items:stretch !important;gap:10px !important;padding:14px}
+  .kbar>.kdiv{display:none !important}
+  .kbar-top{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .kbar-counts{display:flex;gap:16px;flex-wrap:wrap}
+  .kbar-actions{width:100% !important;margin-left:0 !important;flex-wrap:wrap !important;gap:6px}
+  .kbar-actions>.btn{flex:1;min-width:100px;justify-content:center;padding:9px 8px !important;font-size:11.5px !important}
+  .sh2{flex-wrap:wrap;gap:6px;padding:10px 12px}
+  .snum{font-size:12px;width:36px}
+  .sloc{font-size:12.5px}
+  .stm{font-size:11px}
+  .stabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .stab{white-space:nowrap;padding:8px 10px;font-size:12px}
+  .sp{padding:10px 12px}
+  .ir{flex-wrap:wrap;gap:4px;padding:6px 0;align-items:center}
+  .kpp-btns{flex-wrap:wrap !important;gap:6px !important}
+  .kpp-btns>.btn{flex:1;min-width:130px;justify-content:center !important}
+  .mkrow{flex-wrap:wrap;gap:4px}
+  .mkchar{min-width:0;font-size:12px;width:100%}
+  .mkactor{font-size:11px}
+  .mklook{width:100%;font-size:12px}
+  .mkcont{white-space:normal;font-size:10px}
+  .field-item-row{flex-direction:column !important;align-items:flex-start !important;gap:6px !important}
+  .field-item-row .btn{width:100% !important;justify-content:center}
   .ov{padding:0;align-items:flex-end}
   .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:92vh;max-width:100%;width:100%;margin:0}
   .mbody{padding:14px}
   .mtop{padding:16px 14px 12px}
   .mtabs{overflow-x:auto}
   .mtab{white-space:nowrap}
-  .btn{font-size:12px;padding:8px 12px}
-
-  /* Нижняя навигация */
+  .mact{flex-wrap:wrap}
+  .mact>.btn{flex:1;justify-content:center}
   .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:100;height:60px;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
   .bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:700;color:var(--ink3);cursor:pointer;border-radius:8px;padding:6px 4px;transition:all .15s;min-width:0;border:none;background:none;font-family:'Manrope',sans-serif;letter-spacing:.1px}
   .bni.on{color:var(--blue)}
   .bni-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
   .ni{padding:10px 12px;font-size:13px}
   .scene{margin-bottom:8px}
-  .sh2{flex-wrap:wrap;gap:6px}
+  .si{width:100% !important;max-width:100%}
+  .sw{width:100%}
+  .btn{font-size:12px;padding:8px 12px}
   .sdur{font-size:10px;padding:2px 7px}
   .idc{font-size:9.5px}
   .pill{font-size:10px}
-  .wh-stats{grid-template-columns:repeat(2,1fr)}
-  .notif-stats{grid-template-columns:1fr 1fr}
-  .nr{flex-wrap:wrap}
-  .nr>div:last-child{flex-direction:row !important;align-items:center !important;justify-content:space-between !important;width:100%;padding-top:8px;border-top:1px solid var(--border)}
-  .req-row{flex-wrap:wrap !important;gap:8px !important}
-  .req-row>.btn{flex-shrink:0}
-  .field-g{grid-template-columns:1fr !important}
-  .field-item-row{flex-wrap:wrap !important;gap:6px !important}
-  .field-item-row .btn{width:100%;justify-content:center}
-  .kbar-actions{margin-left:0 !important;width:100% !important;flex-wrap:wrap !important}
 }
 `;
 
@@ -599,12 +597,15 @@ function KPPView(){
     <input ref={kppInputRef} type="file" style={{display:"none"}} accept=".pdf,.xlsx,.xls,.png,.jpg" onChange={e=>{uploadFile(e.target.files[0],"kpp");e.target.value="";}}/>
     <input ref={scriptInputRef} type="file" style={{display:"none"}} accept=".pdf,.txt" onChange={e=>{uploadFile(e.target.files[0],"script");e.target.value="";}}/>
     <div className="kbar">
-      <div><div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:2}}>СЪЁМОЧНЫЙ ДЕНЬ</div><div className="kdate">08-09.02.2025</div></div>
-      <div className="kdiv"/>
-      <div><div style={{fontSize:11.5,color:"#94a3b8",fontWeight:500}}>Проект</div><div style={{fontSize:14.5,fontWeight:800}}>НАШ СПЕЦНАЗ-4 · Блок 3</div></div>
-      <div className="kdiv"/>
-      {[["#16a34a",cn.ok,"На складе"],["#d97706",cn.par,"Частично"],["#dc2626",cn.no,"Нет"],["#00AEEF",cn.sup,"Поставщик"]].map(([c,n,l])=>(<div key={l} className="kcnt"><div className="kcn" style={{color:c}}>{n}</div><div className="kcl">{l}</div></div>))}
-      <div className="kbar-actions" style={{marginLeft:"auto",display:"flex",gap:6}}>
+      <div className="kbar-top">
+        <div><div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:2}}>СЪЁМОЧНЫЙ ДЕНЬ</div><div className="kdate">08-09.02.2025</div></div>
+        <div className="kdiv"/>
+        <div><div style={{fontSize:11.5,color:"#94a3b8",fontWeight:500}}>Проект</div><div style={{fontSize:14.5,fontWeight:800}}>НАШ СПЕЦНАЗ-4 · Блок 3</div></div>
+      </div>
+      <div className="kbar-counts">
+        {[["#16a34a",cn.ok,"На складе"],["#d97706",cn.par,"Частично"],["#dc2626",cn.no,"Нет"],["#00AEEF",cn.sup,"Поставщик"]].map(([c,n,l])=>(<div key={l} className="kcnt"><div className="kcn" style={{color:c}}>{n}</div><div className="kcl">{l}</div></div>))}
+      </div>
+      <div className="kbar-actions">
         <button className="btn bg sm" disabled={uploading} onClick={()=>kppInputRef.current?.click()}><I n="dl" s={13}/>{uploading?"Загрузка...":"Загрузить КПП"}</button>
         <button className="btn bg sm" disabled={uploading} onClick={()=>scriptInputRef.current?.click()}><I n="doc" s={13}/>Загрузить сценарий</button>
         <button className="btn bp sm"><I n="send" s={13} c="#fff"/>Экспорт</button>
@@ -642,7 +643,7 @@ function KPPView(){
             </div>
             <Pill s={it.status}/>
           </div>);})}
-          <div style={{display:"flex",gap:6,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(0,0,0,.05)"}}>
+          <div className="kpp-btns">
             <button className="btn bp sm"><I n="chk" s={13} c="#fff"/>Создать запросы</button>
             <button className="btn bg sm"><I n="send" s={13}/>Запрос поставщику</button>
             <button className="btn bg sm"><I n="dl" s={13}/>Список закупки</button>
