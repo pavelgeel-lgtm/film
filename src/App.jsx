@@ -268,6 +268,8 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .bdg{animation:badgePulse 2s ease infinite}
 .xbtn:active{transform:scale(.9) !important}
 .cbtn:active{transform:scale(.97)}
+.wh-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.notif-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
 
 .hamburger{display:none;width:36px;height:36px;align-items:center;justify-content:center;border:none;background:var(--surface);border-radius:var(--r);cursor:pointer;flex-shrink:0;border:1px solid var(--border)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.45);z-index:199;backdrop-filter:blur(2px)}
@@ -345,6 +347,16 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .sdur{font-size:10px;padding:2px 7px}
   .idc{font-size:9.5px}
   .pill{font-size:10px}
+  .wh-stats{grid-template-columns:repeat(2,1fr)}
+  .notif-stats{grid-template-columns:1fr 1fr}
+  .nr{flex-wrap:wrap}
+  .nr>div:last-child{flex-direction:row !important;align-items:center !important;justify-content:space-between !important;width:100%;padding-top:8px;border-top:1px solid var(--border)}
+  .req-row{flex-wrap:wrap !important;gap:8px !important}
+  .req-row>.btn{flex-shrink:0}
+  .field-g{grid-template-columns:1fr !important}
+  .field-item-row{flex-wrap:wrap !important;gap:6px !important}
+  .field-item-row .btn{width:100%;justify-content:center}
+  .kbar-actions{margin-left:0 !important;width:100% !important;flex-wrap:wrap !important}
 }
 `;
 
@@ -536,7 +548,7 @@ function InvView({type}){
 function NotifsView(){
   const [sel,setSel]=useState(null);
   return(<div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:14}}>
+    <div className="notif-stats">
       {[["#dc2626","#fee2e2","alert","Критические",1],["#d97706","#fef3c7","clk","Предупреждения",1],["#00AEEF","#E6F7FD","bell","Информационные",1]].map(([tc,bg,ico,lb,ct])=>(<div key={lb} style={{background:bg,borderRadius:"14px",padding:"14px 16px",display:"flex",gap:12,alignItems:"center",border:`1px solid ${tc}33`}}><div style={{width:40,height:40,borderRadius:10,background:tc+"22",display:"flex",alignItems:"center",justifyContent:"center"}}><I n={ico} s={18} c={tc}/></div><div><div style={{fontSize:26,fontWeight:800,color:tc,letterSpacing:"-1px",lineHeight:1}}>{ct}</div><div style={{fontSize:12,color:tc,opacity:.75,marginTop:2,fontWeight:700}}>{lb}</div></div></div>))}
     </div>
     <div className="card">
@@ -592,7 +604,7 @@ function KPPView(){
       <div><div style={{fontSize:11.5,color:"#94a3b8",fontWeight:500}}>Проект</div><div style={{fontSize:14.5,fontWeight:800}}>НАШ СПЕЦНАЗ-4 · Блок 3</div></div>
       <div className="kdiv"/>
       {[["#16a34a",cn.ok,"На складе"],["#d97706",cn.par,"Частично"],["#dc2626",cn.no,"Нет"],["#00AEEF",cn.sup,"Поставщик"]].map(([c,n,l])=>(<div key={l} className="kcnt"><div className="kcn" style={{color:c}}>{n}</div><div className="kcl">{l}</div></div>))}
-      <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+      <div className="kbar-actions" style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button className="btn bg sm" disabled={uploading} onClick={()=>kppInputRef.current?.click()}><I n="dl" s={13}/>{uploading?"Загрузка...":"Загрузить КПП"}</button>
         <button className="btn bg sm" disabled={uploading} onClick={()=>scriptInputRef.current?.click()}><I n="doc" s={13}/>Загрузить сценарий</button>
         <button className="btn bp sm"><I n="send" s={13} c="#fff"/>Экспорт</button>
@@ -1011,8 +1023,8 @@ function WarehouseView(){
   const doReturn=id=>setIssued(p=>p.filter(r=>r.id!==id));
   const confirm=id=>setRequests(p=>p.map(r=>r.id===id?{...r,status:"confirmed"}:r));
   return(<div>
-    <div style={{display:"flex",gap:12,marginBottom:14}}>
-      {[{c:"#dc2626",bg:"#fee2e2",n:newReqs.length,l:"Новых запросов"},{c:"#d97706",bg:"#fef3c7",n:confirmReqs.length,l:"Ожидают выдачи"},{c:"#16a34a",bg:"#dcfce7",n:issued.length,l:"На руках"},{c:"#00AEEF",bg:"#E6F7FD",n:ITEMS.filter(i=>i.status==="На складе").length,l:"На складе"}].map(s=>(<div key={s.l} style={{flex:1,background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
+    <div className="wh-stats">
+      {[{c:"#dc2626",bg:"#fee2e2",n:newReqs.length,l:"Новых запросов"},{c:"#d97706",bg:"#fef3c7",n:confirmReqs.length,l:"Ожидают выдачи"},{c:"#16a34a",bg:"#dcfce7",n:issued.length,l:"На руках"},{c:"#00AEEF",bg:"#E6F7FD",n:ITEMS.filter(i=>i.status==="На складе").length,l:"На складе"}].map(s=>(<div key={s.l} style={{background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
         <div style={{fontSize:26,fontWeight:800,color:s.c,letterSpacing:"-1px",lineHeight:1}}>{s.n}</div>
         <div style={{fontSize:11.5,color:s.c,fontWeight:700,marginTop:3,opacity:.8}}>{s.l}</div>
       </div>))}
@@ -1025,7 +1037,7 @@ function WarehouseView(){
     {tab==="requests"&&<div>
       {requests.filter(r=>r.status!=="issued").length===0&&<div style={{textAlign:"center",padding:"40px",color:"#94a3b8",fontWeight:600}}>Нет активных запросов</div>}
       {requests.filter(r=>r.status!=="issued").map(r=>(
-        <div key={r.id} style={{background:"#fff",borderRadius:12,border:"1px solid rgba(0,0,0,.08)",padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+        <div key={r.id} className="req-row" style={{background:"#fff",borderRadius:12,border:"1px solid rgba(0,0,0,.08)",padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
           <div style={{width:38,height:38,borderRadius:10,background:r.status==="new"?"#fee2e2":"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
             <I n="box" s={18} c={r.status==="new"?"#dc2626":"#d97706"}/>
           </div>
@@ -1042,7 +1054,7 @@ function WarehouseView(){
     {tab==="issued"&&<div>
       {issued.length===0&&<div style={{textAlign:"center",padding:"40px",color:"#94a3b8",fontWeight:600}}>Всё возвращено</div>}
       {issued.map(r=>(
-        <div key={r.id} style={{background:"#fff",borderRadius:12,border:"1px solid rgba(0,0,0,.08)",padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
+        <div key={r.id} className="req-row" style={{background:"#fff",borderRadius:12,border:"1px solid rgba(0,0,0,.08)",padding:"14px 16px",marginBottom:8,display:"flex",alignItems:"center",gap:12,boxShadow:"0 1px 3px rgba(0,0,0,.06)"}}>
           <div style={{width:38,height:38,borderRadius:10,background:"#fef3c7",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><I n="ul" s={18} c="#d97706"/></div>
           <div style={{flex:1}}>
             <div style={{fontWeight:800,fontSize:13.5}}>{r.itemName}</div>
@@ -1127,13 +1139,13 @@ function FieldView(){
       <div><div style={{fontWeight:800,fontSize:16,color:"#fff"}}>Волков Д.</div><div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginTop:2}}>Реквизитор · НАШ СПЕЦНАЗ-4 · Блок 3</div></div>
       <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:8,padding:"6px 12px"}}><div style={{fontSize:11,color:"rgba(255,255,255,.7)",fontWeight:600}}>На руках</div><div style={{fontSize:20,fontWeight:800,color:"#fff"}}>{myItems.length}</div></div>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+    <div className="field-g" style={{display:"grid",gap:12,marginBottom:14}}>
       <div className="card" style={{padding:"14px 16px"}}>
         <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:10}}>МОЙ РЕКВИЗИТ</div>
         {myItems.length===0&&<div style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Ничего на руках</div>}
         {myItems.map(i=>(<div key={i.id} style={{padding:"10px 0",borderBottom:"1px solid rgba(0,0,0,.05)"}}>
           <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{i.item_name}</div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div className="field-item-row" style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <span style={{fontSize:11.5,color:"#dc2626",fontWeight:700}}>Вернуть до {i.return_date}</span>
             {!i.receipt_confirmed_at
               ?<button className="btn bp sm" style={{fontSize:11}} onClick={()=>setConfirmModal(i)}><I n="chk" s={12} c="#fff"/>Подтвердить получение</button>
