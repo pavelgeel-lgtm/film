@@ -115,28 +115,89 @@ router.patch("/files/:id/notes", async (req, res) => {
   }
 });
 
-// POST /api/kpp/files/:id/parse — заглушка AI парсинга
-// Когда определишь API — подключим сюда
-router.post("/files/:id/parse", requireRole("admin", "kpp"), async (req, res) => {
+// POST /api/kpp/files/:id/parse — AI парсинг через Groq
+router.post("/files/:id/parse", requireRole("admin", "kpp", "warehouse"), async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM kpp_files WHERE id = $1", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: "Не найдено" });
 
-    // ЗАГЛУШКА — вернёт mock пока не подключён AI
-    const mockResult = {
-      status: "pending_ai",
-      message: "AI парсинг не подключён. Укажи API в .env и server/routes/kpp.js",
-      file: rows[0].filename,
-    };
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) return res.status(503).json({ error: "GROQ_API_KEY не настроен на сервере" });
 
-    // Сохраняем статус
-    await pool.query(`
-      UPDATE kpp_files SET parsed_data = parsed_data || $2::jsonb WHERE id = $1
-    `, [req.params.id, JSON.stringify({ parse_status: "pending_ai" })]);
+    const filePath = path.join(UPLOAD_DIR, rows[0].storage_key);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Файл не найден на диске" });
 
-    res.json(mockResult);
+    // Читаем файл как текст
+    let text;
+    try {
+      text = fs.readFileSync(filePath, "utf8");
+    } catch {
+      text = fs.readFileSync(filePath).toString("latin1");
+    }
+
+    // Обрезаем до 12000 символов — хватит для 1 блока КПП
+    const excerpt = text.slice(0, 12000);
+
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.1,
+        max_tokens: 4096,
+        messages: [
+          {
+            role: "system",
+            content: `Ты — AI-ассистент для российского кинопроизводства. Извлеки из КПП/сценария структурированные данные и верни ТОЛЬКО валидный JSON без пояснений.
+
+Формат:
+{
+  "scenes": [{
+    "id": "номер сцены",
+    "type": "ИНТ или НАТ",
+    "loc": "локация",
+    "date": "ДД.ММ.ГГГГ",
+    "time": "ЧЧ:ММ",
+    "dur": "Х ч ХХ мин",
+    "desc": "краткое описание",
+    "items": [{"name": "реквизит", "dept": "реквизит|костюм|транспорт|грим", "status": "Нет", "note": ""}],
+    "makeup": [{"char": "персонаж", "actor": "актёр", "look": "грим", "cont": "-"}]
+  }]
+}`,
+          },
+          { role: "user", content: `Файл: ${rows[0].filename}\n\n${excerpt}` },
+        ],
+      }),
+    });
+
+    if (!groqRes.ok) {
+      const errBody = await groqRes.text();
+      console.error("Groq error:", errBody);
+      return res.status(502).json({ error: "Ошибка Groq API", detail: errBody.slice(0, 200) });
+    }
+
+    const groqData = await groqRes.json();
+    const content = groqData.choices?.[0]?.message?.content || "{}";
+
+    // Извлекаем JSON из ответа
+    let parsed;
+    try {
+      const match = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+      parsed = JSON.parse(match ? match[0] : content);
+    } catch {
+      parsed = { raw: content };
+    }
+
+    // Сохраняем в БД
+    await pool.query(
+      `UPDATE kpp_files SET parsed_data = parsed_data || $2::jsonb WHERE id = $1`,
+      [req.params.id, JSON.stringify({ parse_status: "done", scenes: parsed.scenes || parsed })]
+    );
+
+    res.json({ status: "ok", scenes: parsed.scenes || parsed, file: rows[0].filename });
   } catch (err) {
-    res.status(500).json({ error: "Ошибка сервера" });
+    console.error("parse error:", err);
+    res.status(500).json({ error: "Ошибка сервера", detail: err.message });
   }
 });
 

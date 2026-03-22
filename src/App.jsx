@@ -223,8 +223,8 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .hchips{display:flex;gap:4px;flex-wrap:wrap}
 .afoot{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
 
-.ov{position:fixed;inset:0;background:rgba(10,22,40,.4);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:var(--card);border-radius:var(--r3);box-shadow:var(--sh3);width:100%;max-width:660px;max-height:90vh;overflow-y:auto;border:1px solid var(--border)}
+.ov{position:fixed;inset:0;background:rgba(10,22,40,.4);backdrop-filter:blur(10px);z-index:100;display:flex;overflow-y:auto;padding:20px}
+.modal{margin:auto;background:var(--card);border-radius:var(--r3);box-shadow:var(--sh3);width:100%;max-width:660px;border:1px solid var(--border)}
 .modal-wide{max-width:780px}
 .mtop{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .mtitle{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--ink)}
@@ -358,8 +358,8 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .mkcont{white-space:normal;font-size:10px}
   .field-item-row{flex-direction:column !important;align-items:flex-start !important;gap:6px !important}
   .field-item-row .btn{width:100% !important;justify-content:center}
-  .ov{padding:0;align-items:flex-end}
-  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:92vh;max-width:100%;width:100%;margin:0}
+  .ov{padding:0;align-items:flex-end;overflow-y:hidden}
+  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:88vh;overflow-y:auto;max-width:100%;width:100%;margin:0}
   .mbody{padding:14px}
   .mtop{padding:16px 14px 12px}
   .mtabs{overflow-x:auto}
@@ -1070,7 +1070,7 @@ function WarehouseView(){
     apiFetch("/requests").then(rows=>{
       setRequests(rows.map(r=>({
         id:r.id,item:r.item_id,itemName:r.item_name||r.item_name_free||"—",
-        who:r.requested_by_name||"—",role:r.role||"",
+        who:r.requested_by_name||"—",role:r.requested_by_role||"",
         project:r.project||"",scene:r.scene||"",date:r.needed_by||"",status:r.status
       })));
     }).catch(()=>{});

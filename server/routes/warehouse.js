@@ -91,9 +91,11 @@ router.patch("/items/:id", requireRole("admin", "warehouse"), async (req, res) =
 router.get("/requests", async (req, res) => {
   const { status } = req.query;
   let q = `
-    SELECT r.*, i.name as item_name, i.warehouse, i.cell, i.condition
+    SELECT r.*, i.name as item_name, i.warehouse, i.cell, i.condition,
+           u.name as requested_by_name, u.role as requested_by_role
     FROM warehouse_requests r
     LEFT JOIN items i ON i.id = r.item_id
+    LEFT JOIN users u ON u.id = r.requested_by
     WHERE 1=1
   `;
   const params = [];
