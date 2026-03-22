@@ -131,6 +131,25 @@ CREATE TABLE IF NOT EXISTS location_requests (
   updated_at   TIMESTAMP DEFAULT NOW()
 );
 
+-- Запросы на выдачу со склада
+CREATE TABLE IF NOT EXISTS warehouse_requests (
+  id               SERIAL PRIMARY KEY,
+  item_id          INTEGER REFERENCES items(id),
+  item_name_free   VARCHAR(255),  -- если предмета ещё нет в БД
+  requested_by     INTEGER REFERENCES users(id),
+  project          VARCHAR(255),
+  scene            VARCHAR(100),
+  needed_by        DATE,
+  status           VARCHAR(50) DEFAULT 'new',
+  -- new | confirmed | rejected | issued
+  issuance_id      INTEGER REFERENCES issuances(id),
+  notes            TEXT,
+  created_at       TIMESTAMP DEFAULT NOW(),
+  updated_at       TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_wreq_status ON warehouse_requests(status);
+
 -- ============================================================
 -- КПП
 -- ============================================================

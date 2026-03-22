@@ -1,4 +1,16 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+async function apiFetch(path, opts = {}) {
+  const token = localStorage.getItem("access_token");
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...opts.headers },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw await res.json();
+  return res.json();
+}
 
 const PX={home:"M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5zM9 21V12h6v9",bell:"M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0",box:"M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16zM3.27 6.96L12 12.01 20.73 6.96M12 22.08V12",hanger:"M20.38 18.01L13 10.28V8.5A2.5 2.5 0 109.5 6M3.62 18.01A1 1 0 004.5 19.5h15a1 1 0 00.88-1.49L13 10.28",film:"M2 2h20v20H2zM7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 7h5M17 17h5",car:"M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h3l2-4h8l2 4h3a2 2 0 012 2v6a2 2 0 01-2 2h-2",pin:"M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6",users:"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",search:"M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0",plus:"M12 5v14M5 12h14",sliders:"M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6",dl:"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3",ul:"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12",x:"M18 6L6 18M6 6l12 12",cr:"M9 18l6-6-6-6",cd:"M6 9l6 6 6-6",cam:"M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a4 4 0 100-8 4 4 0 000 8",edit:"M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",doc:"M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8",star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",arch:"M21 8v13H3V8M1 3h22v5H1zM10 12h4",truck:"M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 21a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 21a2.5 2.5 0 100-5 2.5 2.5 0 000 5",tag:"M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01",clk:"M12 22a10 10 0 100-20 10 10 0 000 20zM12 6v6l4 2",chk:"M20 6L9 17l-5-5",alert:"M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01",img:"M3 3h18v18H3zM3 15l5-5 4 4 3-3 5 5M14.5 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3",send:"M22 2L11 13M22 2l-7 20-4-9-9-4 20-7",layers:"M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",face:"M20 7c0 5.523-8 13-8 13S4 12.523 4 7a8 8 0 1116 0z",phone:"M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z",mail:"M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6",grid:"M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z",save:"M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8",user:"M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8",trash:"M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"};
 const I=({n,s=18,c="currentColor",w=1.7})=>(<svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" style={{display:"inline-block",flexShrink:0,verticalAlign:"middle"}}><path d={PX[n]||PX.star}/></svg>);
@@ -570,15 +582,91 @@ const REQUESTS_INIT=[
   {id:"REQ-004",item:"PRO-00334",itemName:"Книги советские, 7 шт.",who:"Орлов П.",role:"Реквизитор",project:"НАШ СПЕЦНАЗ-4",scene:"46-4",date:"11.03.2025",status:"issued"},
 ];
 
+/* ── SIGNATURE PAD ───────────────────────────────────────────────────────── */
+function SignaturePad({ onSave, onClear: onClearExt }) {
+  const canvasRef = useRef(null);
+  const drawing = useRef(false);
+  const [isEmpty, setIsEmpty] = useState(true);
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - rect.left) * (canvas.width / rect.width), y: (src.clientY - rect.top) * (canvas.height / rect.height) };
+  };
+
+  const start = useCallback((e) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const pos = getPos(e, canvas);
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    drawing.current = true; setIsEmpty(false);
+  }, []);
+
+  const move = useCallback((e) => {
+    if (!drawing.current) return; e.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const pos = getPos(e, canvas);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.stroke();
+  }, []);
+
+  const end = useCallback(() => { drawing.current = false; }, []);
+
+  const clear = useCallback(() => {
+    const canvas = canvasRef.current;
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    setIsEmpty(true); onSave(null); onClearExt?.();
+  }, [onSave, onClearExt]);
+
+  const save = useCallback(() => {
+    if (isEmpty) return;
+    const data = canvasRef.current.toDataURL("image/png");
+    onSave(data);
+  }, [isEmpty, onSave]);
+
+  useEffect(() => { save(); }, []);
+
+  return (
+    <div>
+      <div style={{ border: "1.5px solid #cbd5e1", borderRadius: 10, background: "#f8fafc", overflow: "hidden", touchAction: "none" }}>
+        <canvas ref={canvasRef} width={480} height={140} style={{ width: "100%", display: "block", cursor: "crosshair" }}
+          onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+          onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+        />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+        <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>Подпишите пальцем или мышью</span>
+        <button className="btn bg sm" style={{ fontSize: 11 }} onClick={clear}><I n="trash" s={12} />Очистить</button>
+      </div>
+    </div>
+  );
+}
+
 function IssueModal({req,onClose,onIssue}){
   const item=ITEMS.find(i=>i.id===req.item);
   const [step,setStep]=useState(1);
   const [cond,setCond]=useState("Отлично");
+  const [sig,setSig]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+
+  const doIssue=async()=>{
+    if(!sig){setErr("Необходима подпись");return;}
+    setLoading(true);setErr(null);
+    try{
+      await apiFetch(`/requests/${req.id}/issue`,{method:"POST",body:{condition_at_issue:cond,signature:sig}});
+      onIssue(req.id);onClose();
+    }catch(e){setErr(e?.error||"Ошибка");setLoading(false);}
+  };
+
   return(<div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>ВЫДАЧА РЕКВИЗИТА</div><div className="mtitle">{req.itemName}</div></div><button className="xbtn" onClick={onClose}><I n="x" s={15}/></button></div>
     <div className="mbody">
       <div style={{display:"flex",gap:8,marginBottom:16}}>
-        {["Проверить","Фото","Выдать"].map((s,i)=><div key={s} style={{flex:1,textAlign:"center",padding:"6px 0",borderRadius:7,background:step===i+1?"#00AEEF":step>i+1?"#dcfce7":"#f1f5f9",color:step===i+1?"#fff":step>i+1?"#16a34a":"#94a3b8",fontWeight:700,fontSize:12}}>{i+1}. {s}</div>)}
+        {["Проверить","Фото","Подпись"].map((s,i)=><div key={s} style={{flex:1,textAlign:"center",padding:"6px 0",borderRadius:7,background:step===i+1?"#00AEEF":step>i+1?"#dcfce7":"#f1f5f9",color:step===i+1?"#fff":step>i+1?"#16a34a":"#94a3b8",fontWeight:700,fontSize:12}}>{i+1}. {s}</div>)}
       </div>
       {step===1&&<>
         <div style={{background:"#f8fafc",borderRadius:10,border:"1px solid rgba(0,0,0,.07)",padding:"12px 14px",marginBottom:12}}>
@@ -605,20 +693,24 @@ function IssueModal({req,onClose,onIssue}){
             <span style={{fontSize:11,fontWeight:700}}>Фото {i}</span>
           </div>)}
         </div>
-        <div className="mact"><button className="btn bp" onClick={()=>setStep(3)}>Готово — Выдать</button><button className="btn bg" onClick={()=>setStep(1)}>Назад</button></div>
+        <div className="mact"><button className="btn bp" onClick={()=>setStep(3)}>Далее — Подпись</button><button className="btn bg" onClick={()=>setStep(1)}>Назад</button></div>
       </>}
       {step===3&&<>
-        <div style={{background:"#dcfce7",borderRadius:10,border:"1px solid #16a34a",padding:"16px",textAlign:"center",marginBottom:16}}>
-          <div style={{fontSize:32,marginBottom:8}}>✓</div>
-          <div style={{fontWeight:800,fontSize:16,color:"#065f46"}}>Готово к выдаче!</div>
-          <div style={{fontSize:13,color:"#16a34a",marginTop:4}}>{req.who} получит уведомление с просьбой подтвердить получение</div>
-        </div>
-        <div style={{background:"#f8fafc",borderRadius:8,padding:"10px 14px",marginBottom:16}}>
+        <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:10}}>ПОДПИСЬ ПОЛУЧАТЕЛЯ — {req.who}</div>
+        <SignaturePad onSave={setSig}/>
+        {sig&&<div style={{background:"#dcfce7",borderRadius:8,padding:"8px 12px",marginTop:10,fontSize:12,color:"#16a34a",fontWeight:700}}>✓ Подпись получена</div>}
+        {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+        <div style={{background:"#f8fafc",borderRadius:8,padding:"10px 14px",marginTop:12,marginBottom:4}}>
           <div style={{fontSize:12,color:"#94a3b8",fontWeight:600}}>После выдачи:</div>
           <div style={{fontSize:13,marginTop:4}}>· Ячейка {item?.cell} освобождается автоматически</div>
           <div style={{fontSize:13}}>· Дедлайн возврата: {req.date}</div>
         </div>
-        <div className="mact"><button className="btn bp" onClick={()=>{onIssue(req.id);onClose();}}>Подтвердить выдачу</button></div>
+        <div className="mact">
+          <button className="btn bp" onClick={doIssue} disabled={!sig||loading}>
+            {loading?<I n="clk" s={14} c="#fff"/>:<I n="ul" s={14} c="#fff"/>}{loading?"Сохраняем...":"Подтвердить выдачу"}
+          </button>
+          <button className="btn bg" onClick={()=>setStep(2)}>Назад</button>
+        </div>
       </>}
     </div>
   </div></div>);
@@ -628,6 +720,19 @@ function ReturnModal({issue,onClose,onReturn}){
   const item=ITEMS.find(i=>i.id===issue.item);
   const [cond,setCond]=useState("Хорошее");
   const [damaged,setDamaged]=useState(false);
+  const [sig,setSig]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+
+  const doReturn=async()=>{
+    if(!sig){setErr("Необходима подпись");return;}
+    setLoading(true);setErr(null);
+    try{
+      await apiFetch(`/issuances/${issue.id}/return`,{method:"POST",body:{condition_at_return:cond,damaged,signature:sig}});
+      onReturn(issue.id);onClose();
+    }catch(e){setErr(e?.error||"Ошибка");setLoading(false);}
+  };
+
   return(<div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>ВОЗВРАТ РЕКВИЗИТА</div><div className="mtitle">{issue.itemName}</div></div><button className="xbtn" onClick={onClose}><I n="x" s={15}/></button></div>
     <div className="mbody">
@@ -660,9 +765,13 @@ function ReturnModal({issue,onClose,onReturn}){
         </div>
         <span style={{fontSize:13,fontWeight:700,color:damaged?"#dc2626":"#334155"}}>Обнаружены повреждения — создать задачу на ремонт</span>
       </div>
-      <div className="mact">
-        <button className="btn bp" onClick={()=>{onReturn(issue.id);onClose();}}>
-          <I n="dl" s={14} c="#fff"/>Принять возврат
+      <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>ПОДПИСЬ СДАЮЩЕГО — {issue.who}</div>
+      <SignaturePad onSave={setSig}/>
+      {sig&&<div style={{background:"#dcfce7",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#16a34a",fontWeight:700}}>✓ Подпись получена</div>}
+      {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+      <div className="mact" style={{marginTop:14}}>
+        <button className="btn bp" onClick={doReturn} disabled={!sig||loading}>
+          {loading?<I n="clk" s={14} c="#fff"/>:<I n="dl" s={14} c="#fff"/>}{loading?"Сохраняем...":"Принять возврат"}
         </button>
         <button className="btn bg" onClick={onClose}>Отмена</button>
       </div>
