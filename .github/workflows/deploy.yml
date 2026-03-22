@@ -12,18 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Build frontend
-        env:
-          VITE_API_URL: /api
-        run: |
-          npm ci
-          npm run build
-
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -36,8 +24,10 @@ jobs:
             # Получить последний код
             git pull origin main
 
-            # Пересобрать и перезапустить
-            docker compose build --no-cache server
+            # Пересобрать все образы (включая nginx с новым фронтом)
+            docker compose build --no-cache
+
+            # Перезапустить
             docker compose up -d --remove-orphans
 
             # Удалить старые образы

@@ -275,10 +275,10 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 
 @media(max-width:768px){
   .hamburger{display:flex}
-  .sb{position:fixed;inset:0;width:85%;max-width:300px;z-index:200;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh3)}
+  .sb{position:fixed;top:0;left:0;bottom:0;width:82%;max-width:290px;min-width:0 !important;z-index:200;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh3)}
   .sb.open{transform:translateX(0)}
   .sb-overlay{display:block}
-  .app{flex-direction:column;height:100vh}
+  .app{height:100vh}
   .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%}
   .content{padding:12px 12px 76px}
   .topbar{padding:10px 12px;gap:8px}
