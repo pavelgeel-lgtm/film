@@ -9,8 +9,9 @@ RUN npm run build
 # ── Stage 2: Build server ────────────────────────────────────────────────
 FROM node:20-alpine AS server-builder
 WORKDIR /server
+RUN apk add --no-cache python3 make g++
 COPY server/package.json server/package-lock.json* ./
-RUN npm ci --ignore-scripts
+RUN npm ci
 
 # ── Stage 3: Final image ─────────────────────────────────────────────────
 FROM node:20-alpine
