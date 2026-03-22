@@ -268,6 +268,51 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .bdg{animation:badgePulse 2s ease infinite}
 .xbtn:active{transform:scale(.9) !important}
 .cbtn:active{transform:scale(.97)}
+
+.hamburger{display:none;width:36px;height:36px;align-items:center;justify-content:center;border:none;background:var(--surface);border-radius:var(--r);cursor:pointer;flex-shrink:0;border:1px solid var(--border)}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.45);z-index:199;backdrop-filter:blur(2px)}
+.bnav{display:none}
+
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .sb{position:fixed;inset:0;width:85%;max-width:300px;z-index:200;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:var(--sh3)}
+  .sb.open{transform:translateX(0)}
+  .sb-overlay{display:block}
+  .app{flex-direction:column;height:100vh}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;width:100%}
+  .content{padding:12px 12px 76px}
+  .topbar{padding:10px 12px;gap:8px}
+  .tbt{font-size:14px}
+  .tbp{display:none}
+  .topbar>span[style]{display:none}
+  .topbar>.sep{display:none}
+  .sg{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sc{padding:12px 14px}
+  .sn{font-size:22px}
+  .g2{grid-template-columns:1fr}
+  .mgrid{grid-template-columns:1fr}
+  .mgrid3{grid-template-columns:1fr 1fr}
+  .ag{grid-template-columns:1fr}
+  .rg{grid-template-columns:repeat(2,1fr)}
+  .pgrid{grid-template-columns:repeat(2,1fr)}
+  .frow{grid-template-columns:1fr}
+  .card{overflow-x:auto}
+  .kbar{flex-direction:column;align-items:flex-start;gap:8px}
+  .mkchar{min-width:80px;font-size:12px}
+  .si{width:100%;max-width:100%}
+  .ov{padding:0;align-items:flex-end}
+  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:92vh;max-width:100%;width:100%;margin:0}
+  .mbody{padding:14px}
+  .mtop{padding:16px 14px 12px}
+  .btn{font-size:12px;padding:8px 12px}
+  .bnav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);z-index:100;height:60px;padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9px;font-weight:700;color:var(--ink3);cursor:pointer;border-radius:8px;padding:6px 4px;transition:all .15s;min-width:0;border:none;background:none;font-family:'Manrope',sans-serif;letter-spacing:.1px}
+  .bni.on{color:var(--blue)}
+  .bni-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+  .ni{padding:10px 12px;font-size:13px}
+  .scene{margin-bottom:8px}
+  .sh2{flex-wrap:wrap;gap:6px}
+}
 `;
 
 const Pill=({s})=>{const c=sc(s);return <span className="pill" style={{background:c.bg,color:c.tx}}><span className="dot" style={{background:c.d}}/>{s}</span>;};
@@ -1326,16 +1371,29 @@ function RentalView(){
   </div>);
 }
 
+const BOT_NAV=[
+  {id:"home",ico:"home",lbl:"Главная"},
+  {id:"warehouse",ico:"arch",lbl:"Склад"},
+  {id:"field",ico:"users",lbl:"Кабинет"},
+  {id:"kpp",ico:"film",lbl:"КПП"},
+  {id:"notifs",ico:"bell",lbl:"Уведомления",badge:3},
+];
+
 export default function App(){
   const [view,setView]=useState("home");
-  return(<><style>{CSS}</style><div className="app">
-    <div className="sb">
-      <div className="sb-top"><div className="sb-mark"><ClapIcon s={20}/></div><div><div className="sb-name">3X Media cloud</div><div className="sb-sub">Production Assets</div></div></div>
-      <div className="nav">{NAV.map((item,i)=>item.s?(<div key={i} className="ns" style={{marginTop:i>0?4:0}}>{item.s}</div>):(<div key={item.id} className={`ni ${view===item.id?"on":""}`} onClick={()=>setView(item.id)}><span className="nico"><I n={item.ico} s={15} c={view===item.id?"#fff":"#334155"}/></span>{item.lbl}{item.badge>0&&<span className="bdg">{item.badge}</span>}</div>))}</div>
+  const [mOpen,setMOpen]=useState(false);
+  const nav=(v)=>{setView(v);setMOpen(false);};
+  return(<><style>{CSS}</style>
+  {mOpen&&<div className="sb-overlay" onClick={()=>setMOpen(false)}/>}
+  <div className="app">
+    <div className={`sb ${mOpen?"open":""}`}>
+      <div className="sb-top"><div className="sb-mark"><ClapIcon s={20}/></div><div><div className="sb-name">3X Media cloud</div><div className="sb-sub">Production Assets</div></div><button className="xbtn" style={{marginLeft:"auto",flexShrink:0}} onClick={()=>setMOpen(false)}><I n="x" s={14}/></button></div>
+      <div className="nav">{NAV.map((item,i)=>item.s?(<div key={i} className="ns" style={{marginTop:i>0?4:0}}>{item.s}</div>):(<div key={item.id} className={`ni ${view===item.id?"on":""}`} onClick={()=>nav(item.id)}><span className="nico"><I n={item.ico} s={15} c={view===item.id?"#fff":"#334155"}/></span>{item.lbl}{item.badge>0&&<span className="bdg">{item.badge}</span>}</div>))}</div>
       <div className="sb-bot"><div className="ava">ХП</div><div><div className="avn">Художник-пост.</div><div className="avr">НАШ СПЕЦНАЗ-4</div></div></div>
     </div>
     <div className="main">
       <div className="topbar">
+        <button className="hamburger" onClick={()=>setMOpen(true)}><I n="layers" s={18}/></button>
         <div className="tbt">{TTLS[view]}</div>
         {view==="kpp"&&<span className="tbp">08-09.02.2025 · Блок 3</span>}
         {view==="warehouse"&&<span className="tbp">4 новых запроса</span>}
@@ -1358,6 +1416,14 @@ export default function App(){
         {view==="locations"&&<LocationsView/>}
         {view==="pprops"&&<PartnerView/>}
         {view==="roles"&&<RolesView/>}
+      </div>
+      <div className="bnav">
+        {BOT_NAV.map(b=>(
+          <button key={b.id} className={`bni${view===b.id?" on":""}`} onClick={()=>nav(b.id)}>
+            <div className="bni-ico"><I n={b.ico} s={22} c={view===b.id?"#00AEEF":"#8898AA"}/></div>
+            {b.lbl}
+          </button>
+        ))}
       </div>
     </div>
   </div></>);
