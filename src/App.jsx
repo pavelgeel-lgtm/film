@@ -475,6 +475,11 @@ function KPPView(){
   const [stab,setStab]=useState({});
   const [editScene,setEditScene]=useState(null);
   const [selItem,setSelItem]=useState(null);
+  const [uploading,setUploading]=useState(false);
+  const [uploadMsg,setUploadMsg]=useState(null);
+  const kppInputRef=useRef(null);
+  const scriptInputRef=useRef(null);
+
   const tog=id=>setOpen(p=>({...p,[id]:!p[id]}));
   const gtab=id=>stab[id]||"items";
   const settab=(id,t)=>setStab(p=>({...p,[id]:t}));
@@ -482,7 +487,27 @@ function KPPView(){
   const findItem=ref=>ITEMS.find(i=>i.id===ref);
   const all=scenes.flatMap(s=>s.items);
   const cn={ok:all.filter(i=>["На складе","Постоянный"].includes(i.status)).length,par:all.filter(i=>["Частично","Сделать"].includes(i.status)).length,no:all.filter(i=>["Нет","Изготовить"].includes(i.status)).length,sup:all.filter(i=>i.status==="Поставщик").length};
+
+  const uploadFile=async(file,doc_type)=>{
+    if(!file)return;
+    setUploading(true);setUploadMsg(null);
+    const fd=new FormData();fd.append("file",file);fd.append("doc_type",doc_type);
+    try{
+      const token=localStorage.getItem("access_token");
+      const res=await fetch(`${API}/kpp/upload`,{method:"POST",headers:token?{Authorization:`Bearer ${token}`}:{},body:fd});
+      const data=await res.json();
+      if(!res.ok)throw data;
+      setUploadMsg({ok:true,text:`Файл "${data.filename}" загружен`});
+    }catch(e){setUploadMsg({ok:false,text:e?.error||"Ошибка загрузки"});}
+    finally{setUploading(false);}
+  };
+
   return(<div>
+    {uploadMsg&&<div style={{marginBottom:10,padding:"10px 14px",borderRadius:8,background:uploadMsg.ok?"#dcfce7":"#fee2e2",color:uploadMsg.ok?"#16a34a":"#dc2626",fontWeight:700,fontSize:13,display:"flex",justifyContent:"space-between"}}>
+      {uploadMsg.text}<button onClick={()=>setUploadMsg(null)} style={{background:"none",border:"none",cursor:"pointer",color:"inherit"}}><I n="x" s={14}/></button>
+    </div>}
+    <input ref={kppInputRef} type="file" style={{display:"none"}} accept=".pdf,.xlsx,.xls,.png,.jpg" onChange={e=>{uploadFile(e.target.files[0],"kpp");e.target.value="";}}/>
+    <input ref={scriptInputRef} type="file" style={{display:"none"}} accept=".pdf,.txt" onChange={e=>{uploadFile(e.target.files[0],"script");e.target.value="";}}/>
     <div className="kbar">
       <div><div style={{fontSize:10,fontWeight:700,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"1px",marginBottom:2}}>СЪЁМОЧНЫЙ ДЕНЬ</div><div className="kdate">08-09.02.2025</div></div>
       <div className="kdiv"/>
@@ -490,8 +515,8 @@ function KPPView(){
       <div className="kdiv"/>
       {[["#16a34a",cn.ok,"На складе"],["#d97706",cn.par,"Частично"],["#dc2626",cn.no,"Нет"],["#00AEEF",cn.sup,"Поставщик"]].map(([c,n,l])=>(<div key={l} className="kcnt"><div className="kcn" style={{color:c}}>{n}</div><div className="kcl">{l}</div></div>))}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
-        <button className="btn bg sm"><I n="dl" s={13}/>Загрузить КПП</button>
-        <button className="btn bg sm"><I n="doc" s={13}/>Загрузить сценарий</button>
+        <button className="btn bg sm" disabled={uploading} onClick={()=>kppInputRef.current?.click()}><I n="dl" s={13}/>{uploading?"Загрузка...":"Загрузить КПП"}</button>
+        <button className="btn bg sm" disabled={uploading} onClick={()=>scriptInputRef.current?.click()}><I n="doc" s={13}/>Загрузить сценарий</button>
         <button className="btn bp sm"><I n="send" s={13} c="#fff"/>Экспорт</button>
       </div>
     </div>
@@ -838,19 +863,69 @@ function WarehouseView(){
 }
 
 /* ── FIELD CABINET ───────────────────────────────────────────────────────── */
+function ConfirmReceiptModal({issuance, onClose, onConfirmed}){
+  const [sig,setSig]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const doConfirm=async()=>{
+    if(!sig){setErr("Необходима подпись");return;}
+    setLoading(true);setErr(null);
+    try{
+      await apiFetch(`/field/issuances/${issuance.id}/confirm`,{method:"POST",body:{signature:sig}});
+      onConfirmed(issuance.id);onClose();
+    }catch(e){setErr(e?.error||"Ошибка");setLoading(false);}
+  };
+  return(<div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
+    <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>ПОДТВЕРЖДЕНИЕ ПОЛУЧЕНИЯ</div><div className="mtitle">{issuance.item_name||issuance.name}</div></div><button className="xbtn" onClick={onClose}><I n="x" s={15}/></button></div>
+    <div className="mbody">
+      <div style={{background:"#fef3c7",borderRadius:10,border:"1px solid #d97706",padding:"12px 14px",marginBottom:14,fontSize:13,color:"#92400e",fontWeight:600}}>
+        Подпишите, что получили предмет в надлежащем состоянии. Подпись сохраняется в системе.
+      </div>
+      <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>ВАША ПОДПИСЬ</div>
+      <SignaturePad onSave={setSig}/>
+      {sig&&<div style={{background:"#dcfce7",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#16a34a",fontWeight:700}}>✓ Подпись получена</div>}
+      {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+      <div className="mact" style={{marginTop:14}}>
+        <button className="btn bp" onClick={doConfirm} disabled={!sig||loading}>
+          {loading?<I n="clk" s={14} c="#fff"/>:<I n="chk" s={14} c="#fff"/>}{loading?"Сохраняем...":"Подтвердить получение"}
+        </button>
+        <button className="btn bg" onClick={onClose}>Отмена</button>
+      </div>
+    </div>
+  </div></div>);
+}
+
 function FieldView(){
   const [myItems,setMyItems]=useState([
-    {id:"PRO-00147",name:"Ваза напольная белая, керамика h=60см",status:"Выдан",returnDate:"01.03.2025",confirmed:true},
-    {id:"COS-00045",name:"Форма СОБР, комплект №2",status:"Выдан",returnDate:"01.03.2025",confirmed:false},
+    {id:1,item_name:"Ваза напольная белая, керамика h=60см",return_date:"01.03.2025",receipt_confirmed_at:"2025-01-01"},
+    {id:2,item_name:"Форма СОБР, комплект №2",return_date:"01.03.2025",receipt_confirmed_at:null},
   ]);
   const [requests,setRequests]=useState([
-    {id:"REQ-F01",name:"Носилки складные",scene:"46-1",date:"10.03.2025",status:"Ожидает подтверждения"},
-    {id:"REQ-F02",name:"Флаг российский напольный",scene:"46-9",date:"11.03.2025",status:"Готово к выдаче"},
+    {id:1,item_name_free:"Носилки складные",scene:"46-1",needed_by:"10.03.2025",status:"new"},
+    {id:2,item_name_free:"Флаг российский напольный",scene:"46-9",needed_by:"11.03.2025",status:"confirmed"},
   ]);
   const [showReq,setShowReq]=useState(false);
+  const [confirmModal,setConfirmModal]=useState(null);
   const [newReq,setNewReq]=useState({name:"",scene:"",date:""});
-  const confirm=id=>setMyItems(p=>p.map(i=>i.id===id?{...i,confirmed:true}:i));
-  const addReq=()=>{if(newReq.name.trim()){setRequests(p=>[...p,{id:"REQ-F0"+(p.length+1),name:newReq.name,scene:newReq.scene,date:newReq.date,status:"Ожидает подтверждения"}]);setNewReq({name:"",scene:"",date:""});setShowReq(false);}};
+  const [loading,setLoading]=useState(false);
+
+  const statusLabel=s=>({new:"Ожидает",confirmed:"Зарезервирован",rejected:"Отклонён",issued:"Выдан"}[s]||s);
+  const statusPill=s=>({new:"Частично",confirmed:"Зарезервирован",rejected:"Нет",issued:"На складе"}[s]||"Частично");
+
+  const onConfirmed=id=>setMyItems(p=>p.map(i=>i.id===id?{...i,receipt_confirmed_at:new Date().toISOString()}:i));
+
+  const addReq=async()=>{
+    if(!newReq.name.trim())return;
+    setLoading(true);
+    try{
+      const r=await apiFetch("/field/requests",{method:"POST",body:{item_name_free:newReq.name,scene:newReq.scene,needed_by:newReq.date}});
+      setRequests(p=>[r,...p]);setNewReq({name:"",scene:"",date:""});setShowReq(false);
+    }catch{
+      setRequests(p=>[{id:Date.now(),item_name_free:newReq.name,scene:newReq.scene,needed_by:newReq.date,status:"new"},...p]);
+      setNewReq({name:"",scene:"",date:""});setShowReq(false);
+    }finally{setLoading(false);}
+  };
+
   return(<div>
     <div style={{background:"linear-gradient(135deg,#1e3a8a,#7c3aed)",borderRadius:14,padding:"16px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
       <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}><I n="user" s={22} c="#fff"/></div>
@@ -860,12 +935,13 @@ function FieldView(){
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
       <div className="card" style={{padding:"14px 16px"}}>
         <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:10}}>МОЙ РЕКВИЗИТ</div>
+        {myItems.length===0&&<div style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Ничего на руках</div>}
         {myItems.map(i=>(<div key={i.id} style={{padding:"10px 0",borderBottom:"1px solid rgba(0,0,0,.05)"}}>
-          <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{i.name}</div>
+          <div style={{fontWeight:700,fontSize:13,marginBottom:4}}>{i.item_name}</div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <span style={{fontSize:11.5,color:"#dc2626",fontWeight:700}}>Вернуть до {i.returnDate}</span>
-            {!i.confirmed
-              ?<button className="btn bp sm" style={{fontSize:11}} onClick={()=>confirm(i.id)}><I n="chk" s={12} c="#fff"/>Подтвердить получение</button>
+            <span style={{fontSize:11.5,color:"#dc2626",fontWeight:700}}>Вернуть до {i.return_date}</span>
+            {!i.receipt_confirmed_at
+              ?<button className="btn bp sm" style={{fontSize:11}} onClick={()=>setConfirmModal(i)}><I n="chk" s={12} c="#fff"/>Подтвердить получение</button>
               :<span style={{fontSize:11.5,color:"#16a34a",fontWeight:700}}>✓ Получено</span>
             }
           </div>
@@ -876,11 +952,12 @@ function FieldView(){
           <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8"}}>МОИ ЗАПРОСЫ</div>
           <button className="btn bp sm" style={{fontSize:11}} onClick={()=>setShowReq(true)}><I n="plus" s={12} c="#fff"/>Новый</button>
         </div>
+        {requests.length===0&&<div style={{fontSize:12,color:"#94a3b8",textAlign:"center",padding:"20px 0"}}>Нет запросов</div>}
         {requests.map(r=>(<div key={r.id} style={{padding:"8px 0",borderBottom:"1px solid rgba(0,0,0,.05)"}}>
-          <div style={{fontWeight:700,fontSize:13}}>{r.name}</div>
+          <div style={{fontWeight:700,fontSize:13}}>{r.item_name||r.item_name_free}</div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
-            <span style={{fontSize:11,color:"#94a3b8"}}>Сцена {r.scene} · {r.date}</span>
-            <Pill s={r.status==="Готово к выдаче"?"Зарезервирован":r.status==="Ожидает подтверждения"?"Частично":"На складе"}/>
+            <span style={{fontSize:11,color:"#94a3b8"}}>Сцена {r.scene} · {r.needed_by}</span>
+            <Pill s={statusPill(r.status)}/>
           </div>
         </div>))}
       </div>
@@ -891,11 +968,12 @@ function FieldView(){
         <div className="fg"><label className="fl">Что нужно</label><input className="fi" placeholder="Название предмета..." value={newReq.name} onChange={e=>setNewReq(p=>({...p,name:e.target.value}))}/></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           <div className="fg"><label className="fl">Сцена</label><input className="fi" placeholder="46-1" value={newReq.scene} onChange={e=>setNewReq(p=>({...p,scene:e.target.value}))}/></div>
-          <div className="fg"><label className="fl">Нужно к</label><input className="fi" placeholder="10.03.2025" value={newReq.date} onChange={e=>setNewReq(p=>({...p,date:e.target.value}))}/></div>
+          <div className="fg"><label className="fl">Нужно к</label><input className="fi" type="date" value={newReq.date} onChange={e=>setNewReq(p=>({...p,date:e.target.value}))}/></div>
         </div>
-        <div className="mact"><button className="btn bp" onClick={addReq}><I n="send" s={14} c="#fff"/>Отправить запрос</button><button className="btn bg" onClick={()=>setShowReq(false)}>Отмена</button></div>
+        <div className="mact"><button className="btn bp" onClick={addReq} disabled={loading}><I n="send" s={14} c="#fff"/>{loading?"Отправляем...":"Отправить запрос"}</button><button className="btn bg" onClick={()=>setShowReq(false)}>Отмена</button></div>
       </div>
     </div></div>}
+    {confirmModal&&<ConfirmReceiptModal issuance={confirmModal} onClose={()=>setConfirmModal(null)} onConfirmed={onConfirmed}/>}
   </div>);
 }
 

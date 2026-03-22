@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import authRouter from "./routes/auth.js";
 import warehouseRouter from "./routes/warehouse.js";
+import fieldRouter from "./routes/field.js";
+import kppRouter from "./routes/kpp.js";
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +14,8 @@ app.use(express.json({ limit: "10mb" }));
 
 app.use("/api/auth", authRouter);
 app.use("/api", warehouseRouter);
+app.use("/api/field", fieldRouter);
+app.use("/api/kpp", kppRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 

@@ -67,11 +67,13 @@ CREATE TABLE IF NOT EXISTS issuances (
   return_date      DATE,
   issued_at        TIMESTAMP DEFAULT NOW(),
   returned_at      TIMESTAMP,
-  issued_by        INTEGER REFERENCES users(id),
-  returned_by      INTEGER REFERENCES users(id),
-  issue_signature  TEXT,   -- base64 canvas
-  return_signature TEXT,
-  notes            TEXT
+  issued_by              INTEGER REFERENCES users(id),
+  returned_by            INTEGER REFERENCES users(id),
+  issue_signature        TEXT,   -- base64 canvas (кладовщик)
+  receipt_confirmed_at   TIMESTAMP,
+  receipt_signature      TEXT,   -- base64 canvas (получатель)
+  return_signature       TEXT,
+  notes                  TEXT
 );
 
 -- ============================================================
