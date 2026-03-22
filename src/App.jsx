@@ -422,12 +422,12 @@ function NotifModal({n,onClose}){
           <div><div style={{fontSize:15,fontWeight:800}}>{n.who}</div><div style={{fontSize:12,color:"#94a3b8",marginTop:2,fontWeight:500}}>{n.role} · {n.project}</div></div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-          <div><div className="mfl">ТЕЛЕФОН</div><div style={{fontSize:13,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}>{n.phone}</div></div>
+          <div><div className="mfl">ТЕЛЕФОН</div><div style={{fontSize:13,fontWeight:700,fontFamily:"'JetBrains Mono',monospace"}}><a href={`tel:${n.phone}`} style={{color:"inherit",textDecoration:"none"}}>{n.phone}</a></div></div>
           <div><div className="mfl">ВЕРНУТЬ ДО</div><div style={{fontSize:13,fontWeight:800,color:n.lv==="crit"?"#dc2626":n.lv==="warn"?"#d97706":"#0f172a"}}>{n.returnDate}</div></div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <button className="cbtn" style={{background:"#dcfce7",color:"#16a34a"}}><I n="phone" s={15} c="#16a34a"/>Позвонить</button>
-          <button className="cbtn" style={{background:"#E6F7FD",color:"#00AEEF"}}><I n="mail" s={15} c="#00AEEF"/>Написать</button>
+          <a href={`tel:${n.phone}`} className="cbtn" style={{background:"#dcfce7",color:"#16a34a",textDecoration:"none"}}><I n="phone" s={15} c="#16a34a"/>Позвонить</a>
+          <a href={`mailto:`} className="cbtn" style={{background:"#E6F7FD",color:"#00AEEF",textDecoration:"none"}}><I n="mail" s={15} c="#00AEEF"/>Написать</a>
         </div>
       </div>
       {n.lv!=="info"&&<div className="ibox" style={{background:lc.bg,borderColor:lc.bc}}><div style={{fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".8px",color:lc.c,marginBottom:3}}>ТРЕБУЕТСЯ ДЕЙСТВИЕ</div><div style={{fontSize:13,fontWeight:600}}>{n.lv==="crit"?"Свяжитесь с получателем и потребуйте немедленного возврата.":`Напомните о возврате. Срок: ${n.returnDate}`}</div></div>}
@@ -480,17 +480,30 @@ function SceneEditModal({scene,onSave,onClose}){
   </div></div>);
 }
 
-function AddModal({onClose}){
+function AddModal({onClose,onAdded}){
+  const [f,setF]=useState({type:"PRO",cat:"Декор",name:"",wh:"Склад А",cell:"",origin:"Закупка",val:"",unique:""});
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState(null);
+  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const save=async()=>{
+    if(!f.name.trim()){setErr("Введите название");return;}
+    setLoading(true);setErr(null);
+    const prefix=f.type==="PRO"?"PRO":"COS";
+    const code=`${prefix}-${Date.now().toString().slice(-5)}`;
+    try{
+      const item=await apiFetch("/items",{method:"POST",body:{code,name:f.name,category:f.cat,condition:"Хорошее",value:parseInt(f.val)||0,origin:f.origin,unique_marks:f.unique,warehouse:f.wh,cell:f.cell}});
+      onAdded&&onAdded(item);onClose();
+    }catch(e){setErr(e?.error||"Ошибка сохранения");setLoading(false);}
+  };
   return(<div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
     <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>НОВАЯ ЕДИНИЦА</div><div className="mtitle">Поставить на учёт</div></div><button className="xbtn" onClick={onClose}><I n="x" s={15}/></button></div>
     <div className="mbody">
-      <div className="frow"><div className="fg"><label className="fl">Тип базы</label><select className="fi"><option>Реквизит (PRO)</option><option>Костюм (COS)</option></select></div><div className="fg"><label className="fl">Категория</label><select className="fi"><option>Декор</option><option>Мебель</option><option>Техника</option><option>Оружие/бутафория</option><option>Форма/мундир</option></select></div></div>
-      <div className="fg"><label className="fl">Название</label><input className="fi" placeholder="Ваза напольная, белая, керамика h=60 см"/></div>
-      <div className="frow"><div className="fg"><label className="fl">Склад</label><select className="fi"><option>Склад А</option><option>Склад Б</option><option>Склад Костюмов</option></select></div><div className="fg"><label className="fl">Ячейка</label><input className="fi" placeholder="A-01"/></div></div>
-      <div className="frow"><div className="fg"><label className="fl">Происхождение</label><select className="fi"><option>Собственный склад</option><option>Закупка</option><option>Аренда</option><option>Бутафорский цех</option></select></div><div className="fg"><label className="fl">Стоимость (руб)</label><input className="fi" type="number" placeholder="0"/></div></div>
-      <div className="fg"><label className="fl">Уникальные признаки</label><input className="fi" placeholder="Скол на дне слева"/></div>
-      <div className="fg"><label className="fl">Фотографии (минимум 3)</label><div className="upz"><I n="cam" s={26} c="#93c5fd"/><br/><br/>Нажмите или перетащите фото</div></div>
-      <div style={{display:"flex",gap:7}}><button className="btn bp" style={{flex:1}}><I n="chk" s={14} c="#fff"/>Поставить на учёт</button><button className="btn bg" onClick={onClose}>Отмена</button></div>
+      <div className="frow"><div className="fg"><label className="fl">Тип базы</label><select className="fi" value={f.type} onChange={set("type")}><option value="PRO">Реквизит (PRO)</option><option value="COS">Костюм (COS)</option></select></div><div className="fg"><label className="fl">Категория</label><select className="fi" value={f.cat} onChange={set("cat")}><option>Декор</option><option>Мебель</option><option>Техника</option><option>Оружие/бутафория</option><option>Форма/мундир</option><option>Медоборудование</option><option>Документы</option></select></div></div>
+      <div className="fg"><label className="fl">Название</label><input className="fi" placeholder="Ваза напольная, белая, керамика h=60 см" value={f.name} onChange={set("name")}/></div>
+      <div className="frow"><div className="fg"><label className="fl">Склад</label><select className="fi" value={f.wh} onChange={set("wh")}><option>Склад А</option><option>Склад Б</option><option>Склад Костюмов</option></select></div><div className="fg"><label className="fl">Ячейка</label><input className="fi" placeholder="A-01" value={f.cell} onChange={set("cell")}/></div></div>
+      <div className="frow"><div className="fg"><label className="fl">Происхождение</label><select className="fi" value={f.origin} onChange={set("origin")}><option>Закупка</option><option>Собственный склад</option><option>Аренда</option><option>Бутафорский цех</option><option>Оценка</option></select></div><div className="fg"><label className="fl">Стоимость (руб)</label><input className="fi" type="number" placeholder="0" value={f.val} onChange={set("val")}/></div></div>
+      <div className="fg"><label className="fl">Уникальные признаки</label><input className="fi" placeholder="Скол на дне слева" value={f.unique} onChange={set("unique")}/></div>
+      {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+      <div style={{display:"flex",gap:7}}><button className="btn bp" style={{flex:1}} onClick={save} disabled={loading}><I n="chk" s={14} c="#fff"/>{loading?"Сохраняем...":"Поставить на учёт"}</button><button className="btn bg" onClick={onClose}>Отмена</button></div>
     </div>
   </div></div>);
 }
@@ -548,11 +561,18 @@ function HomeView(){
 function InvView({type}){
   const [q,setQ]=useState("");const [sel,setSel]=useState(null);const [add,setAdd]=useState(false);
   const items=ITEMS.filter(i=>(type==="c"?i.id.startsWith("COS"):!i.id.startsWith("COS"))&&(!q||i.name.toLowerCase().includes(q.toLowerCase())||i.id.toLowerCase().includes(q.toLowerCase())));
+  const exportCSV=()=>{
+    const hdr="ID,Название,Категория,Склад,Ячейка,Статус,Состояние,Стоимость";
+    const rows=items.map(i=>[i.id,i.name,i.cat||"",i.wh||"",i.cell||"",i.status||"",i.cond||"",i.val||0].map(v=>`"${v}"`).join(","));
+    const csv=[hdr,...rows].join("\n");
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+    a.download=`${type==="c"?"костюмы":"реквизит"}_${new Date().toLocaleDateString("ru")}.csv`;a.click();
+  };
   return(<div>
     <div style={{display:"flex",gap:7,marginBottom:12,alignItems:"center"}}>
       <div className="sw"><span className="sico"><I n="search" s={14}/></span><input className="si" value={q} onChange={e=>setQ(e.target.value)} placeholder={type==="c"?"Поиск по костюмам...":"Поиск по реквизиту..."}/></div>
       <button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button>
-      <button className="btn bg sm"><I n="dl" s={13}/>Экспорт</button>
+      <button className="btn bg sm" onClick={exportCSV}><I n="dl" s={13}/>Экспорт</button>
       <button className="btn bp sm" style={{marginLeft:"auto"}} onClick={()=>setAdd(true)}><I n="plus" s={13} c="#fff"/>Поставить на учёт</button>
     </div>
     <div className="card">
@@ -721,17 +741,54 @@ function AssetGrid({items,getFields,btn}){
   </div>))}</div>{sel&&<AssetModal item={sel} onClose={()=>setSel(null)} fields={getFields(sel)}/>}</>);
 }
 
-function TransportView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={VEHICLES} btn="Забронировать" getFields={v=>[["Собственник",v.owner],["Телефон",v.phone],["Стоимость",v.price],["КПП",v.gearbox],["Водитель",v.driver]]}/></div>);}
-function LocationsView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={LOCATIONS} btn="Запросить" getFields={l=>[["Адрес",l.address],["Собственник",l.owner],["Телефон",l.phone],["Стоимость",l.price],["Доступ",l.access],["Потолки",l.ceiling]]}/></div>);}
-function PartnerView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={PARTNER_PROPS} btn="Запросить" getFields={p=>[["Поставщик",p.supplier],["Телефон",p.phone],["Стоимость",p.price],["Категория",p.cat],["Состав",p.items]]}/></div>);}
+const Ph=({p})=>p?<a href={`tel:${p}`} style={{color:"inherit",textDecoration:"none"}}>{p}</a>:null;
+function TransportView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={VEHICLES} btn="Забронировать" getFields={v=>[["Собственник",v.owner],["Телефон",<Ph p={v.phone}/>],["Стоимость",v.price],["КПП",v.gearbox],["Водитель",v.driver]]}/></div>);}
+function LocationsView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={LOCATIONS} btn="Запросить" getFields={l=>[["Адрес",l.address],["Собственник",l.owner],["Телефон",<Ph p={l.phone}/>],["Стоимость",l.price],["Доступ",l.access],["Потолки",l.ceiling]]}/></div>);}
+function PartnerView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={PARTNER_PROPS} btn="Запросить" getFields={p=>[["Поставщик",p.supplier],["Телефон",<Ph p={p.phone}/>],["Стоимость",p.price],["Категория",p.cat],["Состав",p.items]]}/></div>);}
 
 function RolesView(){
-  const [roles,setRoles]=useState(ROLES_INIT);const [adding,setAdding]=useState(false);const [newName,setNewName]=useState("");
-  const addRole=()=>{if(newName.trim()){setRoles(p=>[...p,{ico:"user",name:newName.trim(),g:"#374151",bg:"#f3f4f6"}]);setNewName("");setAdding(false);}};
-  return(<div><div className="rg">
-    {roles.map(r=>(<div key={r.name} className="rc"><div className="rico" style={{background:r.bg}}><I n={r.ico} s={15} c={r.g}/></div><span className="rname">{r.name}</span></div>))}
-    {adding?(<div className="rc" style={{gap:6}}><input autoFocus className="fi" style={{flex:1,fontSize:12}} value={newName} onChange={e=>setNewName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addRole();if(e.key==="Escape"){setAdding(false);setNewName("");}}} placeholder="Название роли"/><button className="btn bp sm" onClick={addRole}><I n="chk" s={12} c="#fff"/></button></div>):(<div className="rc rc-add" onClick={()=>setAdding(true)}><div className="rico" style={{background:"#E6F7FD"}}><I n="plus" s={15} c="#00AEEF"/></div><span className="rname" style={{color:"#00AEEF"}}>Новая роль</span></div>)}
-  </div></div>);
+  const [roles,setRoles]=useState(ROLES_INIT);
+  const [adding,setAdding]=useState(false);
+  const [f,setF]=useState({name:"",email:"",pass:"",role:"warehouse"});
+  const [loading,setLoading]=useState(false);const [err,setErr]=useState(null);const [ok,setOk]=useState(null);
+  const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
+  const addUser=async()=>{
+    if(!f.name.trim()||!f.email.trim()||!f.pass.trim()){setErr("Заполните все поля");return;}
+    setLoading(true);setErr(null);setOk(null);
+    try{
+      await apiFetch("/auth/register",{method:"POST",body:{name:f.name,email:f.email,password:f.pass,role:f.role}});
+      setOk(`Пользователь ${f.name} создан. Логин: ${f.email}`);
+      setF({name:"",email:"",pass:"",role:"warehouse"});
+      setTimeout(()=>{setAdding(false);setOk(null);},3000);
+    }catch(e){setErr(e?.error||"Ошибка");setLoading(false);}
+    setLoading(false);
+  };
+  return(<div>
+    <div className="rg" style={{marginBottom:16}}>
+      {roles.map(r=>(<div key={r.name} className="rc"><div className="rico" style={{background:r.bg}}><I n={r.ico} s={15} c={r.g}/></div><span className="rname">{r.name}</span></div>))}
+    </div>
+    {!adding?(<button className="btn bp" onClick={()=>setAdding(true)}><I n="plus" s={14} c="#fff"/>Создать аккаунт сотрудника</button>):(
+    <div className="card" style={{padding:"18px 20px",maxWidth:480}}>
+      <div style={{fontWeight:800,fontSize:15,marginBottom:14}}>Новый сотрудник</div>
+      <div className="fg"><label className="fl">Имя и фамилия</label><input className="fi" placeholder="Волков Дмитрий" value={f.name} onChange={set("name")}/></div>
+      <div className="fg"><label className="fl">Email (логин)</label><input className="fi" type="email" placeholder="d.volkov@3xmedia.ru" value={f.email} onChange={set("email")}/></div>
+      <div className="fg"><label className="fl">Пароль</label><input className="fi" type="password" placeholder="Минимум 8 символов" value={f.pass} onChange={set("pass")}/></div>
+      <div className="fg"><label className="fl">Роль в системе</label>
+        <select className="fi" value={f.role} onChange={set("role")}>
+          <option value="admin">Администратор</option>
+          <option value="warehouse">Сотрудник склада</option>
+          <option value="kpp">КПП / Режиссёрская группа</option>
+          <option value="field">Площадка (реквизитор/костюмер)</option>
+        </select>
+      </div>
+      {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+      {ok&&<div style={{background:"#dcfce7",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:"#16a34a",fontWeight:700}}>✓ {ok}</div>}
+      <div style={{display:"flex",gap:8}}>
+        <button className="btn bp" onClick={addUser} disabled={loading}><I n="chk" s={14} c="#fff"/>{loading?"Создаём...":"Создать"}</button>
+        <button className="btn bg" onClick={()=>{setAdding(false);setErr(null);}}>Отмена</button>
+      </div>
+    </div>)}
+  </div>);
 }
 
 /* ── PHOTO UPLOADER ──────────────────────────────────────────────────────── */
