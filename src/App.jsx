@@ -223,8 +223,8 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .hchips{display:flex;gap:4px;flex-wrap:wrap}
 .afoot{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
 
-.ov{position:fixed;inset:0;background:rgba(10,22,40,.4);backdrop-filter:blur(10px);z-index:100;display:flex;overflow-y:auto;padding:20px}
-.modal{margin:auto;background:var(--card);border-radius:var(--r3);box-shadow:var(--sh3);width:100%;max-width:660px;border:1px solid var(--border)}
+.ov{position:fixed;inset:0;background:rgba(10,22,40,.4);backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px}
+.modal{margin:auto;background:var(--card);border-radius:var(--r3);box-shadow:var(--sh3);width:100%;max-width:660px;border:1px solid var(--border);max-height:90vh;overflow-y:auto}
 .modal-wide{max-width:780px}
 .mtop{padding:20px 22px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .mtitle{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--ink)}
@@ -298,6 +298,10 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .kbar-actions{display:flex;gap:6px;margin-left:auto}
 .kpp-btns{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.05)}
 
+.inv-bar{display:flex;gap:7px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.tp-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.cells-bar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.rental-bar{display:flex;gap:12px;margin-bottom:14px;align-items:stretch;flex-wrap:wrap}
 .hamburger{display:none;width:36px;height:36px;align-items:center;justify-content:center;border:none;background:var(--surface);border-radius:var(--r);cursor:pointer;flex-shrink:0;border:1px solid var(--border)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.45);z-index:199;backdrop-filter:blur(2px)}
 .bnav{display:none}
@@ -358,8 +362,6 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .mkcont{white-space:normal;font-size:10px}
   .field-item-row{flex-direction:column !important;align-items:flex-start !important;gap:6px !important}
   .field-item-row .btn{width:100% !important;justify-content:center}
-  .ov{padding:0;align-items:flex-end;overflow-y:hidden}
-  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:88vh;overflow-y:auto;max-width:100%;width:100%;margin:0}
   .mbody{padding:14px}
   .mtop{padding:16px 14px 12px}
   .mtabs{overflow-x:auto}
@@ -378,6 +380,20 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .sdur{font-size:10px;padding:2px 7px}
   .idc{font-size:9.5px}
   .pill{font-size:10px}
+  .card{max-width:100%;box-sizing:border-box}
+  .inv-bar{flex-wrap:wrap}
+  .inv-bar .sw{width:100%}
+  .inv-bar .btn{flex:1;min-width:100px;justify-content:center}
+  .tp-bar{flex-wrap:wrap}
+  .tp-bar .btn{flex:1;min-width:120px;justify-content:center}
+  .cells-bar{flex-wrap:wrap}
+  .cells-bar>div:first-child{flex-wrap:wrap;display:flex;gap:6px;width:100%}
+  .cells-bar .sw{width:100%}
+  .rental-bar{flex-wrap:wrap}
+  .rental-bar>div{flex:1;min-width:120px}
+  .rental-bar>.btn{width:100% !important;justify-content:center}
+  .ov{padding:0;align-items:flex-end;justify-content:flex-start;overflow-y:hidden}
+  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:88vh;overflow-y:auto;max-width:100%;width:100%;margin:0}
 }
 `;
 
@@ -569,11 +585,11 @@ function InvView({type}){
     a.download=`${type==="c"?"костюмы":"реквизит"}_${new Date().toLocaleDateString("ru")}.csv`;a.click();
   };
   return(<div>
-    <div style={{display:"flex",gap:7,marginBottom:12,alignItems:"center"}}>
+    <div className="inv-bar">
       <div className="sw"><span className="sico"><I n="search" s={14}/></span><input className="si" value={q} onChange={e=>setQ(e.target.value)} placeholder={type==="c"?"Поиск по костюмам...":"Поиск по реквизиту..."}/></div>
       <button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button>
       <button className="btn bg sm" onClick={exportCSV}><I n="dl" s={13}/>Экспорт</button>
-      <button className="btn bp sm" style={{marginLeft:"auto"}} onClick={()=>setAdd(true)}><I n="plus" s={13} c="#fff"/>Поставить на учёт</button>
+      <button className="btn bp sm" onClick={()=>setAdd(true)}><I n="plus" s={13} c="#fff"/>Поставить на учёт</button>
     </div>
     <div className="card">
       <table className="tbl">
@@ -742,9 +758,9 @@ function AssetGrid({items,getFields,btn}){
 }
 
 const Ph=({p})=>p?<a href={`tel:${p}`} style={{color:"inherit",textDecoration:"none"}}>{p}</a>:null;
-function TransportView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={VEHICLES} btn="Забронировать" getFields={v=>[["Собственник",v.owner],["Телефон",<Ph p={v.phone}/>],["Стоимость",v.price],["КПП",v.gearbox],["Водитель",v.driver]]}/></div>);}
-function LocationsView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={LOCATIONS} btn="Запросить" getFields={l=>[["Адрес",l.address],["Собственник",l.owner],["Телефон",<Ph p={l.phone}/>],["Стоимость",l.price],["Доступ",l.access],["Потолки",l.ceiling]]}/></div>);}
-function PartnerView(){return(<div><div style={{display:"flex",marginBottom:12}}><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm" style={{marginLeft:"auto"}}><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={PARTNER_PROPS} btn="Запросить" getFields={p=>[["Поставщик",p.supplier],["Телефон",<Ph p={p.phone}/>],["Стоимость",p.price],["Категория",p.cat],["Состав",p.items]]}/></div>);}
+function TransportView(){return(<div><div className="tp-bar"><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm"><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={VEHICLES} btn="Забронировать" getFields={v=>[["Собственник",v.owner],["Телефон",<Ph p={v.phone}/>],["Стоимость",v.price],["КПП",v.gearbox],["Водитель",v.driver]]}/></div>);}
+function LocationsView(){return(<div><div className="tp-bar"><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm"><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={LOCATIONS} btn="Запросить" getFields={l=>[["Адрес",l.address],["Собственник",l.owner],["Телефон",<Ph p={l.phone}/>],["Стоимость",l.price],["Доступ",l.access],["Потолки",l.ceiling]]}/></div>);}
+function PartnerView(){return(<div><div className="tp-bar"><button className="btn bg sm"><I n="sliders" s={13}/>Фильтры</button><button className="btn bp sm"><I n="plus" s={13} c="#fff"/>Добавить</button></div><AssetGrid items={PARTNER_PROPS} btn="Запросить" getFields={p=>[["Поставщик",p.supplier],["Телефон",<Ph p={p.phone}/>],["Стоимость",p.price],["Категория",p.cat],["Состав",p.items]]}/></div>);}
 
 function RolesView(){
   const [roles,setRoles]=useState(ROLES_INIT);
@@ -1338,14 +1354,14 @@ function CellsView(){
   const stats={free:CELLS_DATA.filter(c=>c.status==="free").length,occ:CELLS_DATA.filter(c=>c.status==="occupied").length,blk:CELLS_DATA.filter(c=>c.status==="blocked").length};
   const cellColor=c=>{if(search&&(c.itemName?.toLowerCase().includes(search.toLowerCase())||c.code.toLowerCase().includes(search.toLowerCase())))return{bg:"#fef3c7",border:"#d97706",txt:"#92400e"};if(c.status==="free")return{bg:"#dcfce7",border:"#16a34a",txt:"#065f46"};if(c.status==="occupied")return{bg:"#E6F7FD",border:"#00AEEF",txt:"#0090C8"};return{bg:"#f1f5f9",border:"#94a3b8",txt:"#64748b"};};
   return(<div>
-    <div style={{display:"flex",gap:10,marginBottom:14,alignItems:"center"}}>
-      <div style={{display:"flex",gap:8}}>
+    <div className="cells-bar">
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
         {[{c:"#16a34a",bg:"#dcfce7",n:stats.free,l:"Свободно"},{c:"#00AEEF",bg:"#E6F7FD",n:stats.occ,l:"Занято"},{c:"#94a3b8",bg:"#f1f5f9",n:stats.blk,l:"Заблокировано"}].map(s=>(<div key={s.l} style={{background:s.bg,borderRadius:10,padding:"8px 14px",border:`1px solid ${s.c}44`}}>
           <span style={{fontWeight:800,fontSize:20,color:s.c}}>{s.n}</span>
           <span style={{fontSize:11.5,color:s.c,fontWeight:600,marginLeft:6}}>{s.l}</span>
         </div>))}
       </div>
-      <div className="sw" style={{marginLeft:"auto"}}>
+      <div className="sw">
         <span className="sico"><I n="search" s={14}/></span>
         <input className="si" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Поиск по ячейке или предмету..."/>
       </div>
@@ -1501,12 +1517,12 @@ function RentalView(){
   const getTotal=r=>r.total||r.total_price||0;
 
   return(<div>
-    <div style={{display:"flex",gap:12,marginBottom:14,alignItems:"stretch"}}>
-      {[{c:"#16a34a",bg:"#dcfce7",n:rentals.filter(r=>["Активна","active","signed"].includes(r.status)).length,l:"Активных аренд"},{c:"#00AEEF",bg:"#E6F7FD",n:`${totalActive.toLocaleString()} руб`,l:"В обороте"},{c:"#7c3aed",bg:"#ede9fe",n:rentals.filter(r=>r.status==="signed").length,l:"Подписано"}].map(s=>(<div key={s.l} style={{flex:1,background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
+    <div className="rental-bar">
+      {[{c:"#16a34a",bg:"#dcfce7",n:rentals.filter(r=>["Активна","active","signed"].includes(r.status)).length,l:"Активных аренд"},{c:"#00AEEF",bg:"#E6F7FD",n:`${totalActive.toLocaleString()} руб`,l:"В обороте"},{c:"#7c3aed",bg:"#ede9fe",n:rentals.filter(r=>r.status==="signed").length,l:"Подписано"}].map(s=>(<div key={s.l} style={{flex:1,background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`,minWidth:100}}>
         <div style={{fontSize:22,fontWeight:800,color:s.c,letterSpacing:"-.5px",lineHeight:1}}>{s.n}</div>
         <div style={{fontSize:11.5,color:s.c,fontWeight:700,marginTop:3,opacity:.8}}>{s.l}</div>
       </div>))}
-      <button className="btn bp" style={{alignSelf:"center",marginLeft:"auto"}} onClick={()=>setShowNew(true)}><I n="plus" s={14} c="#fff"/>Новая аренда</button>
+      <button className="btn bp" onClick={()=>setShowNew(true)}><I n="plus" s={14} c="#fff"/>Новая аренда</button>
     </div>
     <div className="card">
       <div className="ch"><span className="ct">Все договора аренды</span><span className="cs">нажмите строку для деталей</span></div>
