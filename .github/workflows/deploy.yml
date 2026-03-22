@@ -1,0 +1,46 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        env:
+          VITE_API_URL: /api
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key:      ${{ secrets.VPS_KEY }}
+          script: |
+            cd /opt/3xmedia
+
+            # Получить последний код
+            git pull origin main
+
+            # Пересобрать и перезапустить
+            docker compose build --no-cache server
+            docker compose up -d --remove-orphans
+
+            # Удалить старые образы
+            docker image prune -f
+
+            echo "✅ Deploy complete"

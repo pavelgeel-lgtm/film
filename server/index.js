@@ -7,6 +7,7 @@ import fieldRouter from "./routes/field.js";
 import kppRouter from "./routes/kpp.js";
 import rentalRouter from "./routes/rental.js";
 import photosRouter from "./routes/photos.js";
+import notifsRouter from "./routes/notifications.js";
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -20,6 +21,8 @@ app.use("/api/field", fieldRouter);
 app.use("/api/kpp", kppRouter);
 app.use("/api", rentalRouter);
 app.use("/api/photos", photosRouter);
+app.use("/api/push", notifsRouter);
+app.use("/api/notifications", notifsRouter);
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
