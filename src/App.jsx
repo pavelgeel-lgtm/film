@@ -1,13 +1,36 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 const API = import.meta.env.VITE_API_URL || "/api";
-async function apiFetch(path, opts = {}) {
+let _refreshing = null;
+async function apiFetch(path, opts = {}, _retry = true) {
   const token = localStorage.getItem("access_token");
   const res = await fetch(API + path, {
     ...opts,
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...opts.headers },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
+  if (res.status === 401 && _retry) {
+    const rt = localStorage.getItem("refresh_token");
+    if (rt) {
+      if (!_refreshing) {
+        _refreshing = fetch(API + "/auth/refresh", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: rt }),
+        }).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+          localStorage.setItem("access_token", d.access);
+          localStorage.setItem("refresh_token", d.refresh);
+        }).catch(() => {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.dispatchEvent(new Event("auth:logout"));
+        }).finally(() => { _refreshing = null; });
+      }
+      await _refreshing;
+      return apiFetch(path, opts, false);
+    }
+    window.dispatchEvent(new Event("auth:logout"));
+    throw { error: "Не авторизован" };
+  }
   if (!res.ok) throw await res.json();
   return res.json();
 }
@@ -544,14 +567,38 @@ function InvView({type}){
 }
 
 function NotifsView(){
+  const [notifs,setNotifs]=useState(NOTIFS);
   const [sel,setSel]=useState(null);
+
+  useEffect(()=>{
+    apiFetch("/notifications").then(rows=>{
+      if(rows.length>0) setNotifs(rows.map(r=>({
+        id:r.id,lv:r.level||"info",ico:r.level==="crit"?"alert":r.level==="warn"?"clk":"bell",
+        title:r.title,body:r.body,who:r.who||"",role:r.role||"",project:r.project||"",
+        time:r.created_at?new Date(r.created_at).toLocaleDateString("ru"):"",
+        is_read:r.is_read,
+      })));
+    }).catch(()=>{});
+  },[]);
+
+  const markRead=async(id,e)=>{
+    e.stopPropagation();
+    apiFetch(`/notifications/${id}/read`,{method:"PATCH"}).catch(()=>{});
+    setNotifs(p=>p.filter(n=>n.id!==id));
+  };
+
+  const crit=notifs.filter(n=>n.lv==="crit").length;
+  const warn=notifs.filter(n=>n.lv==="warn").length;
+  const info=notifs.filter(n=>!["crit","warn"].includes(n.lv)).length;
+
   return(<div>
     <div className="notif-stats">
-      {[["#dc2626","#fee2e2","alert","Критические",1],["#d97706","#fef3c7","clk","Предупреждения",1],["#00AEEF","#E6F7FD","bell","Информационные",1]].map(([tc,bg,ico,lb,ct])=>(<div key={lb} style={{background:bg,borderRadius:"14px",padding:"14px 16px",display:"flex",gap:12,alignItems:"center",border:`1px solid ${tc}33`}}><div style={{width:40,height:40,borderRadius:10,background:tc+"22",display:"flex",alignItems:"center",justifyContent:"center"}}><I n={ico} s={18} c={tc}/></div><div><div style={{fontSize:26,fontWeight:800,color:tc,letterSpacing:"-1px",lineHeight:1}}>{ct}</div><div style={{fontSize:12,color:tc,opacity:.75,marginTop:2,fontWeight:700}}>{lb}</div></div></div>))}
+      {[["#dc2626","#fee2e2","alert","Критические",crit],["#d97706","#fef3c7","clk","Предупреждения",warn],["#00AEEF","#E6F7FD","bell","Информационные",info]].map(([tc,bg,ico,lb,ct])=>(<div key={lb} style={{background:bg,borderRadius:"14px",padding:"14px 16px",display:"flex",gap:12,alignItems:"center",border:`1px solid ${tc}33`}}><div style={{width:40,height:40,borderRadius:10,background:tc+"22",display:"flex",alignItems:"center",justifyContent:"center"}}><I n={ico} s={18} c={tc}/></div><div><div style={{fontSize:26,fontWeight:800,color:tc,letterSpacing:"-1px",lineHeight:1}}>{ct}</div><div style={{fontSize:12,color:tc,opacity:.75,marginTop:2,fontWeight:700}}>{lb}</div></div></div>))}
     </div>
     <div className="card">
       <div className="ch"><span className="ct">Все уведомления</span><span className="cs">нажмите — откроется карточка</span></div>
-      {NOTIFS.map(n=>{const cfg={crit:{bg:"rgba(220,38,38,.09)",c:"#dc2626"},warn:{bg:"rgba(217,119,6,.09)",c:"#d97706"},info:{bg:"rgba(37,99,235,.08)",c:"#00AEEF"}}[n.lv];return(<div key={n.id} className="nr" onClick={()=>setSel(n)}><div className="ni2" style={{background:cfg.bg}}><I n={n.ico} s={16} c={cfg.c}/></div><div style={{flex:1}}><div className="ntt">{n.title}</div><div className="nb">{n.body}</div><div className="nm"><span>{n.who}</span><span>·</span><span>{n.role}</span><span>·</span><span>{n.project}</span></div></div><div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:7}}><span className="ntm">{n.time} назад</span><div style={{display:"flex",gap:5}}><button className="btn bg sm" onClick={e=>e.stopPropagation()}>Закрыть</button><button className="btn bp sm" onClick={e=>{e.stopPropagation();setSel(n);}}>Открыть</button></div></div></div>);})}
+      {notifs.length===0&&<div style={{textAlign:"center",padding:"30px",color:"#94a3b8",fontWeight:600}}>Нет уведомлений</div>}
+      {notifs.map(n=>{const cfg={crit:{bg:"rgba(220,38,38,.09)",c:"#dc2626"},warn:{bg:"rgba(217,119,6,.09)",c:"#d97706"},info:{bg:"rgba(37,99,235,.08)",c:"#00AEEF"}}[n.lv]||{bg:"rgba(37,99,235,.08)",c:"#00AEEF"};return(<div key={n.id} className="nr" onClick={()=>setSel(n)}><div className="ni2" style={{background:cfg.bg}}><I n={n.ico} s={16} c={cfg.c}/></div><div style={{flex:1}}><div className="ntt">{n.title}</div><div className="nb">{n.body}</div><div className="nm"><span>{n.who}</span>{n.role&&<><span>·</span><span>{n.role}</span></>}{n.project&&<><span>·</span><span>{n.project}</span></>}</div></div><div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:7}}><span className="ntm">{n.time}</span><div style={{display:"flex",gap:5}}><button className="btn bg sm" onClick={e=>markRead(n.id,e)}>Закрыть</button><button className="btn bp sm" onClick={e=>{e.stopPropagation();setSel(n);}}>Открыть</button></div></div></div>);})}
     </div>
     {sel&&<NotifModal n={sel} onClose={()=>setSel(null)}/>}
   </div>);
@@ -1018,11 +1065,33 @@ function WarehouseView(){
   const [issueModal,setIssueModal]=useState(null);
   const [returnModal,setReturnModal]=useState(null);
   const [tab,setTab]=useState("requests");
+
+  useEffect(()=>{
+    apiFetch("/requests").then(rows=>{
+      setRequests(rows.map(r=>({
+        id:r.id,item:r.item_id,itemName:r.item_name||r.item_name_free||"—",
+        who:r.requested_by_name||"—",role:r.role||"",
+        project:r.project||"",scene:r.scene||"",date:r.needed_by||"",status:r.status
+      })));
+    }).catch(()=>{});
+    apiFetch("/issuances").then(rows=>{
+      setIssued(rows.map(r=>({
+        id:r.id,item:r.item_id,itemName:r.item_name||"—",
+        who:r.issued_to_name||"—",date:r.return_date||"",status:"issued"
+      })));
+    }).catch(()=>{});
+  },[]);
+
   const newReqs=requests.filter(r=>r.status==="new");
   const confirmReqs=requests.filter(r=>r.status==="confirmed");
   const doIssue=id=>setRequests(p=>p.map(r=>r.id===id?{...r,status:"issued"}:r));
   const doReturn=id=>setIssued(p=>p.filter(r=>r.id!==id));
-  const confirm=id=>setRequests(p=>p.map(r=>r.id===id?{...r,status:"confirmed"}:r));
+  const confirm=async(id)=>{
+    setRequests(p=>p.map(r=>r.id===id?{...r,status:"confirmed"}:r));
+    apiFetch(`/requests/${id}`,{method:"PATCH",body:{status:"confirmed"}}).catch(()=>{
+      setRequests(p=>p.map(r=>r.id===id?{...r,status:"new"}:r));
+    });
+  };
   return(<div>
     <div className="wh-stats">
       {[{c:"#dc2626",bg:"#fee2e2",n:newReqs.length,l:"Новых запросов"},{c:"#d97706",bg:"#fef3c7",n:confirmReqs.length,l:"Ожидают выдачи"},{c:"#16a34a",bg:"#dcfce7",n:issued.length,l:"На руках"},{c:"#00AEEF",bg:"#E6F7FD",n:ITEMS.filter(i=>i.status==="На складе").length,l:"На складе"}].map(s=>(<div key={s.l} style={{background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
@@ -1103,7 +1172,7 @@ function ConfirmReceiptModal({issuance, onClose, onConfirmed}){
   </div></div>);
 }
 
-function FieldView(){
+function FieldView({user}){
   const [myItems,setMyItems]=useState([
     {id:1,item_name:"Ваза напольная белая, керамика h=60см",return_date:"01.03.2025",receipt_confirmed_at:"2025-01-01"},
     {id:2,item_name:"Форма СОБР, комплект №2",return_date:"01.03.2025",receipt_confirmed_at:null},
@@ -1116,6 +1185,11 @@ function FieldView(){
   const [confirmModal,setConfirmModal]=useState(null);
   const [newReq,setNewReq]=useState({name:"",scene:"",date:""});
   const [loading,setLoading]=useState(false);
+
+  useEffect(()=>{
+    apiFetch("/field/issuances").then(rows=>setMyItems(rows)).catch(()=>{});
+    apiFetch("/field/requests").then(rows=>setRequests(rows)).catch(()=>{});
+  },[]);
 
   const statusLabel=s=>({new:"Ожидает",confirmed:"Зарезервирован",rejected:"Отклонён",issued:"Выдан"}[s]||s);
   const statusPill=s=>({new:"Частично",confirmed:"Зарезервирован",rejected:"Нет",issued:"На складе"}[s]||"Частично");
@@ -1137,7 +1211,7 @@ function FieldView(){
   return(<div>
     <div style={{background:"linear-gradient(135deg,#1e3a8a,#7c3aed)",borderRadius:14,padding:"16px 20px",marginBottom:14,display:"flex",alignItems:"center",gap:14}}>
       <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}><I n="user" s={22} c="#fff"/></div>
-      <div><div style={{fontWeight:800,fontSize:16,color:"#fff"}}>Волков Д.</div><div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginTop:2}}>Реквизитор · НАШ СПЕЦНАЗ-4 · Блок 3</div></div>
+      <div><div style={{fontWeight:800,fontSize:16,color:"#fff"}}>{user?.name||"—"}</div><div style={{fontSize:13,color:"rgba(255,255,255,.7)",marginTop:2}}>{user?.role||""}</div></div>
       <div style={{marginLeft:"auto",background:"rgba(255,255,255,.15)",borderRadius:8,padding:"6px 12px"}}><div style={{fontSize:11,color:"rgba(255,255,255,.7)",fontWeight:600}}>На руках</div><div style={{fontSize:20,fontWeight:800,color:"#fff"}}>{myItems.length}</div></div>
     </div>
     <div className="field-g" style={{display:"grid",gap:12,marginBottom:14}}>
@@ -1422,41 +1496,110 @@ const BOT_NAV=[
   {id:"warehouse",ico:"arch",lbl:"Склад"},
   {id:"field",ico:"users",lbl:"Кабинет"},
   {id:"kpp",ico:"film",lbl:"КПП"},
-  {id:"notifs",ico:"bell",lbl:"Уведомления",badge:3},
+  {id:"notifs",ico:"bell",lbl:"Уведомления"},
 ];
 
+function LoginScreen({onLogin}){
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const doLogin=async(e)=>{
+    e.preventDefault();
+    if(!email||!pass)return;
+    setLoading(true);setErr(null);
+    try{
+      const d=await apiFetch("/auth/login",{method:"POST",body:{email,password:pass}},false);
+      localStorage.setItem("access_token",d.access);
+      localStorage.setItem("refresh_token",d.refresh);
+      onLogin(d.user);
+    }catch(e){setErr(e?.error||"Ошибка входа");setLoading(false);}
+  };
+  return(<><style>{CSS}</style>
+  <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:"var(--surface)"}}>
+    <div style={{background:"#fff",borderRadius:18,padding:"36px 32px",width:"100%",maxWidth:380,boxShadow:"var(--sh2)"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:28}}>
+        <div className="sb-mark"><ClapIcon s={20}/></div>
+        <div><div style={{fontWeight:800,fontSize:16,color:"var(--ink)"}}>3X Media Cloud</div><div style={{fontSize:11.5,color:"var(--ink3)",fontWeight:600}}>Production Assets</div></div>
+      </div>
+      <form onSubmit={doLogin}>
+        <div className="fg" style={{marginBottom:12}}><label className="fl">Email</label>
+          <input className="fi" type="email" placeholder="user@example.com" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/>
+        </div>
+        <div className="fg" style={{marginBottom:20}}><label className="fl">Пароль</label>
+          <input className="fi" type="password" placeholder="••••••••" autoComplete="current-password" value={pass} onChange={e=>setPass(e.target.value)}/>
+        </div>
+        {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginBottom:14,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+        <button type="submit" className="btn bp" style={{width:"100%",justifyContent:"center"}} disabled={loading}>
+          {loading?"Входим...":"Войти"}
+        </button>
+      </form>
+    </div>
+  </div></>);
+}
+
 export default function App(){
+  const [user,setUser]=useState(null);
+  const [authChecked,setAuthChecked]=useState(false);
   const [view,setView]=useState("home");
   const [mOpen,setMOpen]=useState(false);
+
+  useEffect(()=>{
+    const token=localStorage.getItem("access_token");
+    if(!token){setAuthChecked(true);return;}
+    apiFetch("/auth/me",{},false).then(u=>{setUser(u);setAuthChecked(true);}).catch(()=>{
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setAuthChecked(true);
+    });
+  },[]);
+
+  useEffect(()=>{
+    const handler=()=>{setUser(null);};
+    window.addEventListener("auth:logout",handler);
+    return()=>window.removeEventListener("auth:logout",handler);
+  },[]);
+
+  const logout=()=>{
+    const rt=localStorage.getItem("refresh_token");
+    if(rt)apiFetch("/auth/logout",{method:"POST",body:{token:rt}},false).catch(()=>{});
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    setUser(null);
+  };
+
+  if(!authChecked)return(<><style>{CSS}</style><div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--surface)"}}><div style={{color:"var(--ink3)",fontWeight:600,fontSize:14}}>Загрузка...</div></div></>);
+  if(!user)return <LoginScreen onLogin={setUser}/>;
+
   const nav=(v)=>{setView(v);setMOpen(false);};
+  const initials=user.name?user.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase():"??";
   return(<><style>{CSS}</style>
   {mOpen&&<div className="sb-overlay" onClick={()=>setMOpen(false)}/>}
   <div className="app">
     <div className={`sb ${mOpen?"open":""}`}>
       <div className="sb-top"><div className="sb-mark"><ClapIcon s={20}/></div><div><div className="sb-name">3X Media cloud</div><div className="sb-sub">Production Assets</div></div><button className="xbtn" style={{marginLeft:"auto",flexShrink:0}} onClick={()=>setMOpen(false)}><I n="x" s={14}/></button></div>
       <div className="nav">{NAV.map((item,i)=>item.s?(<div key={i} className="ns" style={{marginTop:i>0?4:0}}>{item.s}</div>):(<div key={item.id} className={`ni ${view===item.id?"on":""}`} onClick={()=>nav(item.id)}><span className="nico"><I n={item.ico} s={15} c={view===item.id?"#fff":"#334155"}/></span>{item.lbl}{item.badge>0&&<span className="bdg">{item.badge}</span>}</div>))}</div>
-      <div className="sb-bot"><div className="ava">ХП</div><div><div className="avn">Художник-пост.</div><div className="avr">НАШ СПЕЦНАЗ-4</div></div></div>
+      <div className="sb-bot" style={{cursor:"pointer"}} onClick={logout}><div className="ava">{initials}</div><div><div className="avn">{user.name}</div><div className="avr">{user.role}</div></div></div>
     </div>
     <div className="main">
       <div className="topbar">
         <button className="hamburger" onClick={()=>setMOpen(true)}><I n="layers" s={18}/></button>
         <div className="tbt">{TTLS[view]}</div>
         {view==="kpp"&&<span className="tbp">08-09.02.2025 · Блок 3</span>}
-        {view==="warehouse"&&<span className="tbp">4 новых запроса</span>}
         <div style={{flex:1}}/>
-        <span style={{fontSize:12.5,fontWeight:600,color:"#94a3b8"}}>НАШ СПЕЦНАЗ-4</span>
+        <span style={{fontSize:12.5,fontWeight:600,color:"#94a3b8",display:"none"}} className="tb-project">НАШ СПЕЦНАЗ-4</span>
         <div className="sep"/>
-        <span style={{fontSize:12.5,fontWeight:700,color:"#16a34a",display:"flex",alignItems:"center",gap:4}}><span style={{width:6,height:6,borderRadius:"50%",background:"#16a34a",display:"inline-block"}}/>В работе</span>
+        <button className="btn bg sm" onClick={logout} style={{fontSize:11}}><I n="x" s={12}/>Выйти</button>
       </div>
       <div className="content">
         {view==="home"&&<HomeView/>}
         {view==="notifs"&&<NotifsView/>}
-        {view==="warehouse"&&<WarehouseView/>}
+        {view==="warehouse"&&<WarehouseView user={user}/>}
         {view==="props"&&<InvView type="p"/>}
         {view==="costumes"&&<InvView type="c"/>}
         {view==="cells"&&<CellsView/>}
         {view==="kpp"&&<KPPView/>}
-        {view==="field"&&<FieldView/>}
+        {view==="field"&&<FieldView user={user}/>}
         {view==="rental"&&<RentalView/>}
         {view==="transport"&&<TransportView/>}
         {view==="locations"&&<LocationsView/>}
