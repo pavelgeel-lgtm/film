@@ -1044,29 +1044,80 @@ const RENTALS_INIT=[
   {id:"RNT-0003",renter:"Студия СТАР-Медиа",type:"Компания",items:[{name:"Форма СОБР, комплект №1",price:2500},{name:"Форма СОБР, комплект №2",price:2500},{name:"Форма ППС, комплект",price:1800}],start:"15.02.2025",end:"20.02.2025",days:5,total:34000,status:"Завершена",payment:"Оплачено"},
 ];
 
-function RentalModal({rental,onClose}){
+function RentalModal({rental,onClose,onSigned}){
+  const [sigMode,setSigMode]=useState(false);
+  const [sig,setSig]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+  const isSigned=rental.status==="signed"||rental.signed_at;
+
+  const openPrint=()=>{
+    const id=rental.id||rental._id;
+    window.open(`${API}/contracts/${id}/print`,"_blank");
+  };
+
+  const doSign=async()=>{
+    if(!sig){setErr("Необходима подпись");return;}
+    setLoading(true);setErr(null);
+    try{
+      const updated=await apiFetch(`/contracts/${rental.id}/sign`,{method:"POST",body:{signature:sig}});
+      onSigned?.(updated);onClose();
+    }catch(e){setErr(e?.error||"Ошибка");setLoading(false);}
+  };
+
+  const meta=rental.meta_json||{};
+  const items=meta.items||rental.items||[];
+  const days=rental.days||(rental.start_date&&rental.end_date?Math.max(1,Math.ceil((new Date(rental.end_date)-new Date(rental.start_date))/86400000)):1);
+
   return(<div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}><div className="modal">
-    <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>ДОГОВОР АРЕНДЫ</div><div className="mtitle">{rental.renter}</div><div className="mid">{rental.id}</div></div><button className="xbtn" onClick={onClose}><I n="x" s={15}/></button></div>
+    <div className="mtop">
+      <div>
+        <div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>ДОГОВОР АРЕНДЫ</div>
+        <div className="mtitle">{meta.renter_name||rental.renter||rental.project}</div>
+        <div className="mid">{rental.id}</div>
+      </div>
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        {isSigned&&<span style={{background:"#dcfce7",color:"#16a34a",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:20}}>✓ Подписан</span>}
+        <button className="xbtn" onClick={onClose}><I n="x" s={15}/></button>
+      </div>
+    </div>
     <div className="mbody">
-      <div className="mgrid">
-        {[["Арендатор",rental.renter],["Тип",rental.type],["Начало",rental.start],["Конец",rental.end],["Дней",rental.days],["Статус оплаты",rental.payment]].map(([l,v])=><div key={l}><div className="mfl">{l}</div><div className="mfv">{v}</div></div>)}
-      </div>
-      <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>СОСТАВ АРЕНДЫ</div>
-      <div style={{background:"#f8fafc",borderRadius:10,border:"1px solid rgba(0,0,0,.07)",overflow:"hidden",marginBottom:14}}>
-        {rental.items.map((it,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 14px",borderBottom:i<rental.items.length-1?"1px solid rgba(0,0,0,.05)":"none"}}>
-          <span style={{fontWeight:600,fontSize:13}}>{it.name}</span>
-          <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:"#00AEEF",fontWeight:700}}>{it.price} руб/сут</span>
-        </div>))}
-        <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px",background:"#f1f5f9",borderTop:"2px solid rgba(0,0,0,.07)"}}>
-          <span style={{fontWeight:800,fontSize:14}}>Итого за {rental.days} дней</span>
-          <span style={{fontWeight:800,fontSize:16,color:"#00AEEF"}}>{rental.total.toLocaleString()} руб</span>
+      {!sigMode&&<>
+        <div className="mgrid">
+          {[["Арендатор",meta.renter_name||rental.renter||rental.project],["Тип",meta.renter_type||rental.type||"—"],["Начало",rental.start||rental.start_date],["Конец",rental.end||rental.end_date],["Дней",days],["Статус",rental.status||"draft"]].map(([l,v])=><div key={l}><div className="mfl">{l}</div><div className="mfv">{v||"—"}</div></div>)}
         </div>
-      </div>
-      <div className="mact">
-        <button className="btn bp sm"><I n="doc" s={13} c="#fff"/>Скачать договор PDF</button>
-        <button className="btn bg sm"><I n="doc" s={13}/>Акт приёма-передачи</button>
-        <button className="btn bg sm"><I n="edit" s={13}/>Редактировать</button>
-      </div>
+        <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>СОСТАВ АРЕНДЫ</div>
+        <div style={{background:"#f8fafc",borderRadius:10,border:"1px solid rgba(0,0,0,.07)",overflow:"hidden",marginBottom:14}}>
+          {items.map((it,i)=>(<div key={i} style={{display:"flex",justifyContent:"space-between",padding:"10px 14px",borderBottom:i<items.length-1?"1px solid rgba(0,0,0,.05)":"none"}}>
+            <span style={{fontWeight:600,fontSize:13}}>{it.name||it.item}</span>
+            <span style={{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:"#00AEEF",fontWeight:700}}>{(it.price||0).toLocaleString()} руб/сут</span>
+          </div>))}
+          <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px",background:"#f1f5f9",borderTop:"2px solid rgba(0,0,0,.07)"}}>
+            <span style={{fontWeight:800,fontSize:14}}>Итого за {days} дней</span>
+            <span style={{fontWeight:800,fontSize:16,color:"#00AEEF"}}>{(rental.total||rental.total_price||0).toLocaleString()} руб</span>
+          </div>
+        </div>
+        <div className="mact">
+          <button className="btn bp sm" onClick={openPrint}><I n="doc" s={13} c="#fff"/>Печать / PDF</button>
+          {!isSigned&&<button className="btn bg sm" style={{background:"#7c3aed",color:"#fff",border:"none"}} onClick={()=>setSigMode(true)}><I n="edit" s={13} c="#fff"/>Подписать</button>}
+          <button className="btn bg sm"><I n="edit" s={13}/>Редактировать</button>
+        </div>
+      </>}
+      {sigMode&&<>
+        <div style={{background:"#f0f9ff",borderRadius:10,border:"1px solid #bae6fd",padding:"12px 14px",marginBottom:14,fontSize:13,color:"#0369a1",fontWeight:600}}>
+          Подпись арендатора будет встроена в договор и сохранена в системе.
+        </div>
+        <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>ПОДПИСЬ АРЕНДАТОРА — {meta.renter_name||rental.renter}</div>
+        <SignaturePad onSave={setSig}/>
+        {sig&&<div style={{background:"#dcfce7",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#16a34a",fontWeight:700}}>✓ Подпись получена</div>}
+        {err&&<div style={{background:"#fee2e2",borderRadius:8,padding:"8px 12px",marginTop:8,fontSize:12,color:"#dc2626",fontWeight:700}}>{err}</div>}
+        <div className="mact" style={{marginTop:14}}>
+          <button className="btn bp" onClick={doSign} disabled={!sig||loading}>
+            {loading?<I n="clk" s={14} c="#fff"/>:<I n="chk" s={14} c="#fff"/>}{loading?"Сохраняем...":"Сохранить подпись"}
+          </button>
+          <button className="btn bg" onClick={()=>{setSigMode(false);setErr(null);}}>Назад</button>
+        </div>
+      </>}
     </div>
   </div></div>);
 }
@@ -1076,18 +1127,43 @@ function RentalView(){
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
   const [nf,setNf]=useState({renter:"",type:"Компания",item:"",price:"",start:"",end:""});
-  const totalActive=rentals.filter(r=>r.status==="Активна").reduce((s,r)=>s+r.total,0);
-  const calcDays=(s,e)=>{try{const d=(new Date(e.split(".").reverse().join("-"))-new Date(s.split(".").reverse().join("-")))/86400000;return d>0?Math.ceil(d):1;}catch{return 1;}};
-  const addRental=()=>{
+  const [loading,setLoading]=useState(false);
+
+  const totalActive=rentals.filter(r=>r.status==="Активна"||r.status==="active"||r.status==="signed").reduce((s,r)=>s+(r.total||r.total_price||0),0);
+  const calcDays=(s,e)=>{try{const a=s.includes(".")?s.split(".").reverse().join("-"):s;const b=e.includes(".")?e.split(".").reverse().join("-"):e;const d=(new Date(b)-new Date(a))/86400000;return d>0?Math.ceil(d):1;}catch{return 1;}};
+
+  const statusLabel=s=>({draft:"Черновик",signed:"Подписан",active:"Активна",completed:"Завершена","Активна":"Активна","Завершена":"Завершена"}[s]||s);
+  const statusPill=s=>({draft:"Частично",signed:"Зарезервирован",active:"Выдан",completed:"Постоянный","Активна":"Выдан","Завершена":"Постоянный"}[s]||"Частично");
+
+  const addRental=async()=>{
     if(!nf.renter||!nf.item)return;
-    const days=calcDays(nf.start||"01.03.2025",nf.end||"07.03.2025");
+    const days=calcDays(nf.start||"2025-03-01",nf.end||"2025-03-07");
     const price=parseInt(nf.price)||500;
-    setRentals(p=>[...p,{id:`RNT-000${p.length+1}`,renter:nf.renter,type:nf.type,items:[{name:nf.item,price}],start:nf.start||"01.03.2025",end:nf.end||"07.03.2025",days,total:days*price,status:"Активна",payment:"Не оплачено"}]);
+    const total=days*price;
+    setLoading(true);
+    try{
+      const r=await apiFetch("/contracts",{method:"POST",body:{
+        renter_name:nf.renter,renter_type:nf.type,
+        start_date:nf.start,end_date:nf.end,total_price:total,
+        items:[{name:nf.item,price}]
+      }});
+      setRentals(p=>[r,...p]);
+    }catch{
+      setRentals(p=>[{id:`RNT-${Date.now()}`,renter:nf.renter,type:nf.type,items:[{name:nf.item,price}],start:nf.start,end:nf.end,days,total,status:"draft",payment:"Не оплачено"},...p]);
+    }finally{setLoading(false);}
     setNf({renter:"",type:"Компания",item:"",price:"",start:"",end:""});setShowNew(false);
   };
+
+  const onSigned=updated=>setRentals(p=>p.map(r=>r.id===updated.id?{...r,...updated}:r));
+
+  const getRenter=r=>{const m=r.meta_json||{};return m.renter_name||r.renter||r.project||"—";}
+  const getType=r=>{const m=r.meta_json||{};return m.renter_type||r.type||"—";}
+  const getItems=r=>{const m=r.meta_json||{};return(m.items||r.items||[]).map(i=>i.name||i.item).join(", ")||"—";}
+  const getTotal=r=>r.total||r.total_price||0;
+
   return(<div>
     <div style={{display:"flex",gap:12,marginBottom:14,alignItems:"stretch"}}>
-      {[{c:"#16a34a",bg:"#dcfce7",n:rentals.filter(r=>r.status==="Активна").length,l:"Активных аренд"},{c:"#00AEEF",bg:"#E6F7FD",n:`${totalActive.toLocaleString()} руб`,l:"В обороте"},{c:"#d97706",bg:"#fef3c7",n:rentals.filter(r=>r.payment==="Не оплачено").length,l:"Не оплачено"}].map(s=>(<div key={s.l} style={{flex:1,background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
+      {[{c:"#16a34a",bg:"#dcfce7",n:rentals.filter(r=>["Активна","active","signed"].includes(r.status)).length,l:"Активных аренд"},{c:"#00AEEF",bg:"#E6F7FD",n:`${totalActive.toLocaleString()} руб`,l:"В обороте"},{c:"#7c3aed",bg:"#ede9fe",n:rentals.filter(r=>r.status==="signed").length,l:"Подписано"}].map(s=>(<div key={s.l} style={{flex:1,background:s.bg,borderRadius:12,padding:"12px 14px",border:`1px solid ${s.c}33`}}>
         <div style={{fontSize:22,fontWeight:800,color:s.c,letterSpacing:"-.5px",lineHeight:1}}>{s.n}</div>
         <div style={{fontSize:11.5,color:s.c,fontWeight:700,marginTop:3,opacity:.8}}>{s.l}</div>
       </div>))}
@@ -1096,19 +1172,21 @@ function RentalView(){
     <div className="card">
       <div className="ch"><span className="ct">Все договора аренды</span><span className="cs">нажмите строку для деталей</span></div>
       <table className="tbl">
-        <thead><tr><th>ID</th><th>Арендатор</th><th>Предметы</th><th>Период</th><th>Сумма</th><th>Оплата</th><th>Статус</th></tr></thead>
-        <tbody>{rentals.map(r=>(<tr key={r.id} onClick={()=>setSel(r)}>
+        <thead><tr><th>ID</th><th>Арендатор</th><th>Предметы</th><th>Период</th><th>Сумма</th><th>Статус</th></tr></thead>
+        <tbody>{rentals.map(r=>(<tr key={r.id} onClick={()=>setSel(r)} style={{cursor:"pointer"}}>
           <td><span className="idc">{r.id}</span></td>
-          <td><div style={{fontWeight:700}}>{r.renter}</div><div style={{fontSize:11,color:"#94a3b8"}}>{r.type}</div></td>
-          <td style={{color:"#334155",fontSize:12.5}}>{r.items.map(i=>i.name).join(", ")}</td>
-          <td style={{fontSize:12,fontFamily:"'JetBrains Mono',monospace"}}>{r.start} — {r.end}<br/><span style={{color:"#94a3b8"}}>{r.days} дн.</span></td>
-          <td style={{fontWeight:800,color:"#00AEEF",fontFamily:"'JetBrains Mono',monospace"}}>{r.total.toLocaleString()} руб</td>
-          <td><Pill s={r.payment==="Оплачено"?"На складе":r.payment==="Не оплачено"?"Нет":"Частично"}/></td>
-          <td><Pill s={r.status==="Активна"?"Выдан":r.status==="Завершена"?"Постоянный":"Зарезервирован"}/></td>
+          <td><div style={{fontWeight:700}}>{getRenter(r)}</div><div style={{fontSize:11,color:"#94a3b8"}}>{getType(r)}</div></td>
+          <td style={{color:"#334155",fontSize:12.5,maxWidth:180}}>{getItems(r)}</td>
+          <td style={{fontSize:12,fontFamily:"'JetBrains Mono',monospace"}}>{r.start||r.start_date} — {r.end||r.end_date}<br/><span style={{color:"#94a3b8"}}>{r.days} дн.</span></td>
+          <td style={{fontWeight:800,color:"#00AEEF",fontFamily:"'JetBrains Mono',monospace"}}>{getTotal(r).toLocaleString()} руб</td>
+          <td>
+            {r.status==="signed"&&<span style={{background:"#dcfce7",color:"#16a34a",fontSize:11,fontWeight:800,padding:"2px 8px",borderRadius:20}}>✓ Подписан</span>}
+            {r.status!=="signed"&&<Pill s={statusPill(r.status)}/>}
+          </td>
         </tr>))}</tbody>
       </table>
     </div>
-    {sel&&<RentalModal rental={sel} onClose={()=>setSel(null)}/>}
+    {sel&&<RentalModal rental={sel} onClose={()=>setSel(null)} onSigned={onSigned}/>}
     {showNew&&<div className="ov" onClick={e=>e.target===e.currentTarget&&setShowNew(false)}><div className="modal">
       <div className="mtop"><div><div style={{fontSize:11,color:"#94a3b8",fontWeight:600,marginBottom:3}}>НОВАЯ АРЕНДА</div><div className="mtitle">Оформить договор</div></div><button className="xbtn" onClick={()=>setShowNew(false)}><I n="x" s={15}/></button></div>
       <div className="mbody">
@@ -1119,13 +1197,13 @@ function RentalView(){
         <div className="fg"><label className="fl">Предмет аренды</label><input className="fi" placeholder="Ваза напольная белая..." value={nf.item} onChange={e=>setNf(p=>({...p,item:e.target.value}))}/></div>
         <div className="frow">
           <div className="fg"><label className="fl">Цена за сутки (руб)</label><input className="fi" type="number" placeholder="800" value={nf.price} onChange={e=>setNf(p=>({...p,price:e.target.value}))}/></div>
-          <div className="fg"><label className="fl">Дата начала</label><input className="fi" placeholder="01.03.2025" value={nf.start} onChange={e=>setNf(p=>({...p,start:e.target.value}))}/></div>
+          <div className="fg"><label className="fl">Дата начала</label><input className="fi" type="date" value={nf.start} onChange={e=>setNf(p=>({...p,start:e.target.value}))}/></div>
         </div>
-        <div className="fg"><label className="fl">Дата возврата</label><input className="fi" placeholder="07.03.2025" value={nf.end} onChange={e=>setNf(p=>({...p,end:e.target.value}))}/></div>
+        <div className="fg"><label className="fl">Дата возврата</label><input className="fi" type="date" value={nf.end} onChange={e=>setNf(p=>({...p,end:e.target.value}))}/></div>
         {nf.price&&nf.start&&nf.end&&<div style={{background:"#E6F7FD",borderRadius:8,padding:"10px 14px",marginBottom:12,fontWeight:700,color:"#0090C8",fontSize:14}}>
           Итого: {(calcDays(nf.start,nf.end)*(parseInt(nf.price)||0)).toLocaleString()} руб за {calcDays(nf.start,nf.end)} дней
         </div>}
-        <div className="mact"><button className="btn bp" onClick={addRental}><I n="save" s={14} c="#fff"/>Создать договор</button><button className="btn bg" onClick={()=>setShowNew(false)}>Отмена</button></div>
+        <div className="mact"><button className="btn bp" onClick={addRental} disabled={loading}><I n="save" s={14} c="#fff"/>{loading?"Создаём...":"Создать договор"}</button><button className="btn bg" onClick={()=>setShowNew(false)}>Отмена</button></div>
       </div>
     </div></div>}
   </div>);

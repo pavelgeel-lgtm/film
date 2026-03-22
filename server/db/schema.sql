@@ -185,7 +185,8 @@ CREATE TABLE IF NOT EXISTS contracts (
   signed_by   INTEGER REFERENCES users(id),
   signed_at   TIMESTAMP,
   created_by  INTEGER REFERENCES users(id),
-  created_at  TIMESTAMP DEFAULT NOW()
+  created_at  TIMESTAMP DEFAULT NOW(),
+  meta_json   JSONB DEFAULT '{}'  -- renter_name, renter_type, items[]
 );
 
 -- ============================================================
