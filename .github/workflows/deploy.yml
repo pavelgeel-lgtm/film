@@ -18,5 +18,5 @@ jobs:
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \
             xxxmedia3@213.165.218.55 \
-            "cd /opt/3xmedia && sudo git pull origin main && sudo docker compose build nginx && sudo docker compose up -d --remove-orphans && sudo docker image prune -f && echo '✅ Deploy complete'"
+            "cd /opt/3xmedia && sudo git pull origin main && sudo docker compose build --no-cache nginx && sudo docker compose up -d --remove-orphans && sudo docker image prune -f && echo '✅ Deploy complete'"
           rm /tmp/deploy_key
