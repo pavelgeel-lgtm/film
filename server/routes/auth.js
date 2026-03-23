@@ -155,4 +155,18 @@ router.get("/me", async (req, res) => {
   }
 });
 
+router.get("/users", async (req, res) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return res.status(401).json({ error: "Нет токена" });
+  try {
+    jwt.verify(header.slice(7), process.env.JWT_SECRET);
+    const { rows } = await pool.query(
+      "SELECT id, name, email, role FROM users ORDER BY name"
+    );
+    res.json(rows);
+  } catch {
+    res.status(401).json({ error: "Токен недействителен" });
+  }
+});
+
 export default router;

@@ -190,7 +190,7 @@ body {
 .afoot { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 6px; }
 
 /* ── Modals ────────────────────────────────────────────────────────────────── */
-.ov { position: fixed; inset: 0; background: rgba(10,22,40,.4); backdrop-filter: blur(10px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.ov { position: fixed; inset: 0; background: rgba(10,22,40,.4); backdrop-filter: blur(10px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal { margin: auto; background: var(--card); border-radius: var(--r3); box-shadow: var(--sh3); width: 100%; max-width: 660px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
 .modal-wide { max-width: 780px; }
 .mtop { padding: 20px 22px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
