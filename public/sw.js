@@ -1,4 +1,4 @@
-const CACHE = "3xmedia-v2";
+const CACHE = "3xmedia-v3";
 const STATIC = ["/", "/index.html"];
 
 // ── Установка: кэшировать оболочку ──────────────────────────────────────
