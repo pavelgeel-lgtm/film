@@ -7,32 +7,14 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host:     ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key:      ${{ secrets.VPS_KEY }}
-          script: |
-            cd /opt/3xmedia
-
-            # Получить последний код
-            git pull origin main
-
-            # Пересобрать все образы (включая nginx с новым фронтом)
-            docker compose build --no-cache
-
-            # Перезапустить
-            docker compose up -d --remove-orphans
-
-            # Удалить старые образы
-            docker image prune -f
-
-            echo "✅ Deploy complete"
+        run: |
+          echo "${{ secrets.VPS_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key \
+            -o StrictHostKeyChecking=no \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "cd /opt/3xmedia && sudo git pull origin main && sudo docker compose build nginx && sudo docker compose up -d --remove-orphans && sudo docker image prune -f && echo '✅ Deploy complete'"
+          rm /tmp/deploy_key
