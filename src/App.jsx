@@ -245,7 +245,8 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .hdot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .hdate{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink3);white-space:nowrap}.htxt{font-size:12.5px;font-weight:600;color:var(--ink)}
 .ibox{border-radius:8px;padding:11px 14px;margin-bottom:12px;border-left:3px solid}
-.mact{display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.mact{display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0px)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none !important}
 
 .sw{position:relative}.sico{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink3);display:flex}
 .si{padding:8px 12px 8px 34px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--card);font-family:'Manrope',sans-serif;font-size:13px;font-weight:500;color:var(--ink);outline:none;width:240px;transition:border-color .15s}
@@ -268,7 +269,7 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
 .pg{height:4px;background:var(--surface);border-radius:4px;overflow:hidden;border:1px solid var(--border)}.pf{height:100%;border-radius:4px}
 .cbtn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
 .cbtn:hover{transform:translateY(-1px)}
-.erow{display:flex;gap:6px;margin-bottom:7px;align-items:center}
+.erow{display:flex;gap:6px;margin-bottom:7px;align-items:center;flex-wrap:wrap}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
@@ -392,8 +393,9 @@ body{font-family:'Manrope',system-ui,sans-serif;background:var(--surface);color:
   .rental-bar{flex-wrap:wrap}
   .rental-bar>div{flex:1;min-width:120px}
   .rental-bar>.btn{width:100% !important;justify-content:center}
-  .ov{padding:0;align-items:flex-end;justify-content:flex-start;overflow-y:hidden}
-  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:88vh;overflow-y:auto;max-width:100%;width:100%;margin:0}
+  .ov{padding:0;align-items:flex-end;justify-content:center;overflow-y:auto}
+  .modal{border-radius:var(--r2) var(--r2) 0 0;max-height:calc(88vh - env(safe-area-inset-bottom,0px));overflow-y:auto;max-width:100%;width:100%;margin:0}
+  .mact{padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 }
 `;
 
@@ -477,9 +479,9 @@ function SceneEditModal({scene,onSave,onClose}){
       </div>
       <div style={{fontSize:10.5,fontWeight:700,textTransform:"uppercase",letterSpacing:".7px",color:"#94a3b8",marginBottom:8}}>РЕКВИЗИТ И КОСТЮМЫ</div>
       {items.map((it,i)=>(<div key={i} className="erow">
-        <select className="fi" style={{width:100,flex:"none"}} value={it.dept} onChange={e=>updI(i,"dept",e.target.value)}><option>реквизит</option><option>костюм</option><option>транспорт</option></select>
+        <select className="fi" style={{minWidth:80,flex:"1 1 80px"}} value={it.dept} onChange={e=>updI(i,"dept",e.target.value)}><option>реквизит</option><option>костюм</option><option>транспорт</option></select>
         <input className="fi" value={it.name} onChange={e=>updI(i,"name",e.target.value)}/>
-        <select className="fi" style={{width:130,flex:"none"}} value={it.status} onChange={e=>updI(i,"status",e.target.value)}>{["На складе","Постоянный","Частично","Нет","Изготовить","Сделать","Поставщик"].map(s=><option key={s}>{s}</option>)}</select>
+        <select className="fi" style={{minWidth:100,flex:"2 1 100px"}} value={it.status} onChange={e=>updI(i,"status",e.target.value)}>{["На складе","Постоянный","Частично","Нет","Изготовить","Сделать","Поставщик"].map(s=><option key={s}>{s}</option>)}</select>
         <button className="btn br sm" style={{padding:"5px 8px",flex:"none"}} onClick={()=>delI(i)}><I n="trash" s={13} c="#dc2626"/></button>
       </div>))}
       <button className="btn bg sm" style={{marginBottom:14}} onClick={()=>setItems(p=>[...p,{name:"Новая позиция",dept:"реквизит",status:"На складе",note:""}])}><I n="plus" s={13}/>Добавить позицию</button>
