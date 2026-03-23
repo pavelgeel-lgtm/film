@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "../components/Icon";
 import SignaturePad from "../components/SignaturePad";
 import { apiFetch } from "../api";
+import Portal from "../components/Portal";
 
 export default function ConfirmReceiptModal({ issuance, onClose, onConfirmed }) {
   const [sig, setSig] = useState(null);
@@ -23,7 +24,7 @@ export default function ConfirmReceiptModal({ issuance, onClose, onConfirmed }) 
   };
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -49,6 +50,6 @@ export default function ConfirmReceiptModal({ issuance, onClose, onConfirmed }) 
           </div>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

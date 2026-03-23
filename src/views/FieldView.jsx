@@ -3,6 +3,7 @@ import Icon from "../components/Icon";
 import Pill from "../components/Pill";
 import ConfirmReceiptModal from "../modals/ConfirmReceiptModal";
 import { apiFetch } from "../api";
+import Portal from "../components/Portal";
 
 export default function FieldView({ user }) {
   const [myItems, setMyItems] = useState([
@@ -98,7 +99,7 @@ export default function FieldView({ user }) {
       </div>
 
       {showReq && (
-        <div className="ov" onClick={e => e.target === e.currentTarget && setShowReq(false)}>
+        <Portal><div className="ov" onClick={e => e.target === e.currentTarget && setShowReq(false)}>
           <div className="modal">
             <div className="mtop">
               <div>
@@ -131,7 +132,7 @@ export default function FieldView({ user }) {
               </div>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
 
       {confirmModal && <ConfirmReceiptModal issuance={confirmModal} onClose={() => setConfirmModal(null)} onConfirmed={onConfirmed} />}

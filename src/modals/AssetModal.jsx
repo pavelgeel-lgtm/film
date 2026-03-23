@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "../components/Icon";
+import Portal from "../components/Portal";
 import { apiFetch } from "../api";
 
 export default function AssetModal({ item, onClose, fields, btnLabel = "Запросить" }) {
@@ -36,6 +37,7 @@ export default function AssetModal({ item, onClose, fields, btnLabel = "Запр
   };
 
   return (
+    <Portal>
     <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
@@ -127,5 +129,6 @@ export default function AssetModal({ item, onClose, fields, btnLabel = "Запр
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

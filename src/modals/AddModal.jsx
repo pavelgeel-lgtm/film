@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Icon from "../components/Icon";
 import { apiFetch } from "../api";
+import Portal from "../components/Portal";
 
 export default function AddModal({ onClose, onAdded }) {
   const [f, setF] = useState({ type: "PRO", cat: "Декор", name: "", wh: "Склад А", cell: "", origin: "Закупка", val: "", unique: "" });
@@ -29,7 +30,7 @@ export default function AddModal({ onClose, onAdded }) {
   };
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -95,6 +96,6 @@ export default function AddModal({ onClose, onAdded }) {
           </div>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "../components/Icon";
+import Portal from "../components/Portal";
 
 export default function SceneEditModal({ scene, onSave, onClose }) {
   const [f, setF] = useState({ loc: scene.loc, date: scene.date, time: scene.time, dur: scene.dur, desc: scene.desc });
@@ -14,7 +15,7 @@ export default function SceneEditModal({ scene, onSave, onClose }) {
   const save = () => { onSave({ ...scene, ...f, items, makeup }); onClose(); };
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal modal-wide">
         <div className="mtop">
           <div>
@@ -75,6 +76,6 @@ export default function SceneEditModal({ scene, onSave, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

@@ -5,6 +5,7 @@ import SignaturePad from "../components/SignaturePad";
 import PhotoUploader from "../components/PhotoUploader";
 import { apiFetch } from "../api";
 import { ITEMS } from "../constants";
+import Portal from "../components/Portal";
 
 export default function ReturnModal({ issue, onClose, onReturn }) {
   const item = ITEMS.find(i => i.id === issue.item);
@@ -29,7 +30,7 @@ export default function ReturnModal({ issue, onClose, onReturn }) {
   };
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -89,6 +90,6 @@ export default function ReturnModal({ issue, onClose, onReturn }) {
           </div>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

@@ -300,8 +300,9 @@ select.fi { appearance: none; -webkit-appearance: none; background-image: url("d
   .frow { grid-template-columns: 1fr; }
   .sc { padding: 12px 14px; }
   .sn { font-size: 20px; }
-  .card { overflow-x: auto !important; }
+  .card { overflow-x: auto !important; -webkit-overflow-scrolling: touch; width: 100% !important; box-sizing: border-box !important; }
   .tbl { min-width: 520px; }
+  .content > * { max-width: 100%; box-sizing: border-box; }
   .tbl th { white-space: nowrap; font-size: 9px; padding: 7px 8px; }
   .tbl td { padding: 8px; font-size: 12px; }
   .nr { flex-wrap: wrap; }

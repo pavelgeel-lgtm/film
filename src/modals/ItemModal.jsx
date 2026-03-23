@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "../components/Icon";
 import Pill from "../components/Pill";
 import Cell from "../components/Cell";
+import Portal from "../components/Portal";
 
 const HIST = [
   { d: "14.02.2025", t: "Выдан", a: true },
@@ -18,7 +19,7 @@ export default function ItemModal({ item, onClose }) {
   ];
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -105,6 +106,6 @@ export default function ItemModal({ item, onClose }) {
           ))}
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

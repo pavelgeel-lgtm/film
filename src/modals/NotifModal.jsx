@@ -1,6 +1,7 @@
 import Icon from "../components/Icon";
 import Cell from "../components/Cell";
 import { ITEMS } from "../constants";
+import Portal from "../components/Portal";
 
 export default function NotifModal({ n, onClose }) {
   const item = ITEMS.find(i => i.id === n.itemId);
@@ -11,7 +12,7 @@ export default function NotifModal({ n, onClose }) {
   }[n.lv];
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -77,6 +78,6 @@ export default function NotifModal({ n, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

@@ -5,6 +5,7 @@ import SignaturePad from "../components/SignaturePad";
 import PhotoUploader from "../components/PhotoUploader";
 import { apiFetch } from "../api";
 import { ITEMS } from "../constants";
+import Portal from "../components/Portal";
 
 export default function IssueModal({ req, onClose, onIssue }) {
   const item = ITEMS.find(i => i.id === req.item);
@@ -31,7 +32,7 @@ export default function IssueModal({ req, onClose, onIssue }) {
   const steps = ["Проверить", "Фото", "Подпись"];
 
   return (
-    <div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
+    <Portal><div className="ov" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
         <div className="mtop">
           <div>
@@ -102,6 +103,6 @@ export default function IssueModal({ req, onClose, onIssue }) {
           </>}
         </div>
       </div>
-    </div>
+    </div></Portal>
   );
 }

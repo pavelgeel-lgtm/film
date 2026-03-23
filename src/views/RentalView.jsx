@@ -4,6 +4,7 @@ import Pill from "../components/Pill";
 import RentalModal from "../modals/RentalModal";
 import { apiFetch } from "../api";
 import { RENTALS_INIT } from "../constants";
+import Portal from "../components/Portal";
 
 export default function RentalView() {
   const [rentals, setRentals] = useState(RENTALS_INIT);
@@ -95,7 +96,7 @@ export default function RentalView() {
       {sel && <RentalModal rental={sel} onClose={() => setSel(null)} onSigned={onSigned} />}
 
       {showNew && (
-        <div className="ov" onClick={e => e.target === e.currentTarget && setShowNew(false)}>
+        <Portal><div className="ov" onClick={e => e.target === e.currentTarget && setShowNew(false)}>
           <div className="modal">
             <div className="mtop">
               <div>
@@ -149,7 +150,7 @@ export default function RentalView() {
               </div>
             </div>
           </div>
-        </div>
+        </div></Portal>
       )}
     </div>
   );
