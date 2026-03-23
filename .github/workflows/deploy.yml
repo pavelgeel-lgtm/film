@@ -10,8 +10,10 @@ jobs:
 
     steps:
       - name: Deploy to VPS via SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_KEY }}
         run: |
-          echo "${{ secrets.VPS_KEY }}" > /tmp/deploy_key
+          printf '%s' "$SSH_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key \
             -o StrictHostKeyChecking=no \
